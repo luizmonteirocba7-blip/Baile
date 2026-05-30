@@ -176,7 +176,7 @@ const Render = {
         const sectorA = document.getElementById('sector-a');
         const sectorB = document.getElementById('sector-b');
         
-        if(!sectorA || !sectorB) return; // Evita erro se elementos não existirem
+        if(!sectorA || !sectorB) return; 
         
         sectorA.innerHTML = '';
         sectorB.innerHTML = '';
@@ -189,7 +189,6 @@ const Render = {
     },
 
     createTablePin(table) {
-        // CORREÇÃO: Fallback caso a planilha venha com status estranho. (Evita crash total)
         let statusKey = table.status ? table.status.toLowerCase() : 'livre';
         const config = STATUS_CONFIG[statusKey] || STATUS_CONFIG['livre']; 
         
@@ -215,7 +214,6 @@ const Render = {
 
         const filtered = sorted.filter(table => {
             if (!searchText) return true;
-            // CORREÇÃO: Garantir que identification seja uma string antes do toLowerCase
             const ident = table.identification ? String(table.identification).toLowerCase() : '';
             return table.number.toString().includes(lowerSearch) || ident.includes(lowerSearch);
         });
@@ -229,7 +227,6 @@ const Render = {
     },
 
     createListCard(table) {
-        // CORREÇÃO: Fallback status
         let statusKey = table.status ? table.status.toLowerCase() : 'livre';
         const config = STATUS_CONFIG[statusKey] || STATUS_CONFIG['livre'];
         
@@ -346,7 +343,6 @@ const Sheet = {
 
     fillForm(table) {
         let statusKey = table.status ? table.status.toLowerCase() : 'livre';
-        // Ajusta se não for um status válido
         if(!STATUS_CONFIG[statusKey]) statusKey = 'livre';
         
         document.getElementById('sheet-status').value = statusKey;
@@ -586,6 +582,77 @@ const Nav = {
 };
 
 // ============================================
+// MÓDULO PWA (INSTALAÇÃO) - RESOLVE O BUG DO BOTÃO TRAVADO
+// ============================================
+const PWA = {
+    deferredPrompt: null,
+
+    init() {
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            this.deferredPrompt = e;
+            
+            if (!localStorage.getItem('install_dismissed')) {
+                setTimeout(() => {
+                    const banner = document.getElementById('install-banner');
+                    if(banner) banner.classList.add('show');
+                }, 2000);
+            }
+        });
+
+        window.addEventListener('appinstalled', () => {
+            this.hideBanner('install-banner');
+            this.deferredPrompt = null;
+        });
+
+        this.checkIos();
+    },
+
+    async install() {
+        if (!this.deferredPrompt) {
+            // AQUI ESTÁ O FEEDBACK PARA NÃO PARECER TRAVADO:
+            showToast('Abra o link nativamente no Chrome ou Safari para instalar.', 'warning');
+            return;
+        }
+        
+        try {
+            this.deferredPrompt.prompt();
+            const { outcome } = await this.deferredPrompt.userChoice;
+            
+            if (outcome === 'accepted') {
+                this.hideBanner('install-banner');
+            }
+        } catch (error) {
+            console.error('Erro na instalação:', error);
+        } finally {
+            this.deferredPrompt = null;
+            this.hideBanner('install-banner');
+        }
+    },
+
+    hideBanner(id) {
+        const banner = document.getElementById(id);
+        if (banner) {
+            banner.classList.remove('show');
+        }
+        localStorage.setItem(id === 'install-banner' ? 'install_dismissed' : 'ios_dismissed', 'true');
+    },
+
+    checkIos() {
+        const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+        const isStandalone = window.navigator.standalone === true;
+        const dismissed = localStorage.getItem('ios_dismissed');
+
+        if (isIos && !isStandalone && !dismissed) {
+            setTimeout(() => {
+                const banner = document.getElementById('ios-banner');
+                if(banner) banner.classList.add('show');
+            }, 2000);
+        }
+    }
+};
+
+// ============================================
 // FUNÇÕES GLOBAIS
 // ============================================
 window.switchTab = function(tabName) { Nav.switchTab(tabName); }
@@ -605,6 +672,11 @@ window.filterList = function() {
 window.toggleSellerOther = function() { Sheet.toggleSellerOther(); }
 window.togglePaymentFields = function() { Sheet.togglePaymentFields(); }
 window.renderInstallmentFields = function() { Sheet.renderInstallmentFields(); }
+
+// Exportando funções do PWA para o HTML
+window.installApp = function() { PWA.install(); }
+window.dismissInstallBanner = function() { PWA.hideBanner('install-banner'); }
+window.dismissIosBanner = function() { PWA.hideBanner('ios-banner'); }
 
 window.toggleSync = async function() {
     if (State.isSyncing) return;
@@ -650,14 +722,16 @@ function showToast(message, type = 'success') {
 }
 
 // ============================================
-// INICIALIZAÇÃO
+// INICIALIZAÇÃO DO APP - RESOLVE O BUG DO LOADING INFINITO
 // ============================================
 async function initApp() {
     try {
         State.init();
         Initialize.createTables();
         
-        // Se a chamada do servidor falhar, o código agora sabe lidar!
+        PWA.init();
+        
+        // Se a chamada do servidor falhar, a trava de proteção garante que o mapa funcione offline/vazio
         await Initialize.mergeWithServerData();
         
         Render.all();
@@ -665,9 +739,9 @@ async function initApp() {
     } catch (error) {
         console.error('Erro ao inicializar:', error);
         showToast('Erro de conexão ao Google.', 'error');
-        Render.all(); // Renderiza mesmo com erro (mostra as mesas vazias locais em vez de travar)
+        Render.all(); // Renderiza mesmo com erro (mostra as mesas vazias)
     } finally {
-        // CORREÇÃO CRÍTICA: Ocultar loading independente de erro ou sucesso
+        // Remove a tela preta de carregamento INDEPENDENTE DE SUCESSO OU ERRO
         const loader = document.getElementById('loading-overlay');
         if (loader) {
             loader.classList.add('opacity-0', 'pointer-events-none');
@@ -675,7 +749,7 @@ async function initApp() {
         }
     }
 
-    // Intervalo mantido
+    // Intervalo de Sincronização
     setInterval(async () => {
         try {
             await Initialize.mergeWithServerData();
