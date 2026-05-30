@@ -188,12 +188,12 @@
                 <p class="text-gray-400 text-xs mt-0.5">Adicionar à tela inicial</p>
             </div>
             <button
-                onclick="installApp()"
+                onclick="if(typeof installApp === 'function') installApp();"
                 class="bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white px-4 py-2.5 rounded-xl text-sm font-bold transition-colors flex-shrink-0 shadow-lg">
                 Instalar
             </button>
             <button
-                onclick="dismissInstallBanner()"
+                onclick="document.getElementById('install-banner').classList.remove('show'); localStorage.setItem('install_dismissed', 'true');"
                 class="text-gray-500 hover:text-gray-300 p-1 flex-shrink-0 transition-colors"
                 aria-label="Fechar banner">
                 <i class="ph ph-x text-lg"></i>
@@ -210,20 +210,23 @@
                     <p class="text-white font-bold text-sm">Instalar como App</p>
                     <p class="text-gray-400 text-xs mt-0.5">Siga os passos abaixo</p>
                 </div>
-                <button onclick="dismissIosBanner()" class="text-gray-500 hover:text-gray-300 p-1 transition-colors" aria-label="Fechar">
+                <button onclick="document.getElementById('ios-banner').classList.remove('show'); localStorage.setItem('ios_dismissed', 'true');" class="text-gray-500 hover:text-gray-300 p-1 transition-colors" aria-label="Fechar">
                     <i class="ph ph-x text-lg"></i>
                 </button>
             </div>
-            <div class="flex items-center gap-2 bg-gray-800/60 rounded-xl p-3">
-                <span class="text-gray-300 text-xs">
+            <div class="flex flex-col gap-3 bg-gray-800/60 rounded-xl p-3">
+                <span class="text-gray-300 text-xs leading-relaxed">
                     1. Toque em
                     <span class="inline-flex items-center gap-1 bg-gray-700 px-2 py-0.5 rounded-lg mx-1">
                         <i class="ph ph-export text-blue-400"></i>
                         <span class="text-white font-medium">Compartilhar</span>
-                    </span>
+                    </span><br>
                     2. Selecione
-                    <span class="bg-gray-700 px-2 py-0.5 rounded-lg mx-1 text-white font-medium">"Tela Inicial"</span>
+                    <span class="bg-gray-700 px-2 py-0.5 rounded-lg mx-1 text-white font-medium mt-1 inline-block">"Tela Inicial"</span>
                 </span>
+                <button onclick="document.getElementById('ios-banner').classList.remove('show'); localStorage.setItem('ios_dismissed', 'true');" class="w-full py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-xs font-bold transition-colors shadow-sm">
+                    Entendi e fechar
+                </button>
             </div>
         </div>
     </div>
