@@ -1,74 +1,20 @@
 {
-  "name": "Baile Dom Pedro II - Gestão 2026",
+  "name": "Baile Dom Pedro II 2026",
   "short_name": "Baile 2026",
-  "description": "Painel de gestão de mesas para o Baile de Gala Dom Pedro II",
-  "start_url": "/Baile/",
-  "scope": "/Baile/",
+  "start_url": "./index.html",
   "display": "standalone",
-  "orientation": "portrait-primary",
-  "theme_color": "#121214",
   "background_color": "#121214",
+  "theme_color": "#121214",
   "icons": [
     {
-      "src": "assets/icon-192.png",
+      "src": "icon-192.png",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
+      "type": "image/png"
     },
     {
-      "src": "assets/icon-512.png",
+      "src": "icon-512.png",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "assets/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "assets/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
-    }
-  ],
-  "categories": ["productivity", "utilities"],
-  "screenshots": [
-    {
-      "src": "assets/icon-192.png",
-      "sizes": "540x720",
-      "type": "image/png",
-      "form_factor": "narrow"
-    }
-  ],
-  "shortcuts": [
-    {
-      "name": "Nova Mesa",
-      "short_name": "Nova Mesa",
-      "description": "Adicionar uma nova mesa ao evento",
-      "url": "/Baile/?action=new-table",
-      "icons": [
-        {
-          "src": "assets/icon-192.png",
-          "sizes": "192x192",
-          "type": "image/png"
-        }
-      ]
-    },
-    {
-      "name": "Sincronizar",
-      "short_name": "Sync",
-      "description": "Sincronizar com servidor",
-      "url": "/Baile/?action=sync",
-      "icons": [
-        {
-          "src": "assets/icon-192.png",
-          "sizes": "192x192",
-          "type": "image/png"
-        }
-      ]
+      "type": "image/png"
     }
   ]
 }
