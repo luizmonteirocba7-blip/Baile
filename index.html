@@ -100,19 +100,12 @@
             .pb-safe { padding-bottom: max(0.5rem, env(safe-area-inset-bottom)); }
         }
 
-        /* Banner de Instalação */
+        /* Banner de Instalação (Agora no topo) */
         .install-banner {
-            transform: translateY(120%);
+            transform: translateY(-150%);
             transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .install-banner.show { transform: translateY(0); }
-
-        /* Banner iOS */
-        .ios-banner {
-            transform: translateY(120%);
-            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .ios-banner.show { transform: translateY(0); }
 
         /* Mapa de imagem */
         .map-image-container {
@@ -139,7 +132,6 @@
 </head>
 <body class="h-screen w-screen flex flex-col overflow-hidden bg-[#121214]">
 
-    <!-- Loading Overlay -->
     <div id="loading-overlay" class="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#121214] transition-opacity duration-500">
         <div class="flex flex-col items-center gap-4">
             <img src="icon-192.png" alt="Baile" class="w-16 h-16 rounded-2xl shadow-xl mb-2 animate-pulse">
@@ -150,7 +142,6 @@
         </div>
     </div>
 
-    <!-- Auth Modal -->
     <div id="auth-modal" class="overlay fixed inset-0 z-[200] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
         <div class="bg-gray-900 p-8 rounded-3xl shadow-2xl w-full max-w-sm border border-gray-800 text-center" id="auth-content">
             <div class="w-16 h-16 bg-blue-500/20 border border-blue-500/30 rounded-2xl flex items-center justify-center mx-auto mb-6">
@@ -179,8 +170,7 @@
         </div>
     </div>
 
-    <!-- BANNER DE INSTALAÇÃO - Android -->
-    <div id="install-banner" class="install-banner fixed left-4 right-4 z-[90] shadow-2xl" style="bottom: 80px;">
+    <div id="install-banner" class="install-banner fixed left-4 right-4 z-[90] shadow-2xl top-4 pt-safe">
         <div class="bg-gradient-to-r from-[#1c1c20] to-[#25252b] border border-blue-500/40 rounded-2xl p-4 flex items-center gap-3 shadow-[0_8px_32px_rgba(59,130,246,0.25)]">
             <img src="icon-192.png" alt="Ícone" class="w-12 h-12 rounded-xl flex-shrink-0 shadow-md">
             <div class="flex-1 min-w-0">
@@ -201,39 +191,7 @@
         </div>
     </div>
 
-    <!-- BANNER DE INSTALAÇÃO - iOS -->
-    <div id="ios-banner" class="ios-banner fixed left-4 right-4 z-[90] shadow-2xl" style="bottom: 80px;">
-        <div class="bg-gradient-to-r from-[#1c1c20] to-[#25252b] border border-purple-500/40 rounded-2xl p-4 shadow-[0_8px_32px_rgba(168,85,247,0.2)]">
-            <div class="flex items-center gap-3 mb-3">
-                <img src="icon-192.png" alt="Ícone" class="w-12 h-12 rounded-xl flex-shrink-0 shadow-md">
-                <div class="flex-1">
-                    <p class="text-white font-bold text-sm">Instalar como App</p>
-                    <p class="text-gray-400 text-xs mt-0.5">Siga os passos abaixo</p>
-                </div>
-                <button onclick="document.getElementById('ios-banner').classList.remove('show'); localStorage.setItem('ios_dismissed', 'true');" class="text-gray-500 hover:text-gray-300 p-1 transition-colors" aria-label="Fechar">
-                    <i class="ph ph-x text-lg"></i>
-                </button>
-            </div>
-            <div class="flex flex-col gap-3 bg-gray-800/60 rounded-xl p-3">
-                <span class="text-gray-300 text-xs leading-relaxed">
-                    1. Toque em
-                    <span class="inline-flex items-center gap-1 bg-gray-700 px-2 py-0.5 rounded-lg mx-1">
-                        <i class="ph ph-export text-blue-400"></i>
-                        <span class="text-white font-medium">Compartilhar</span>
-                    </span><br>
-                    2. Selecione
-                    <span class="bg-gray-700 px-2 py-0.5 rounded-lg mx-1 text-white font-medium mt-1 inline-block">"Tela Inicial"</span>
-                </span>
-                <button onclick="document.getElementById('ios-banner').classList.remove('show'); localStorage.setItem('ios_dismissed', 'true');" class="w-full py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-xs font-bold transition-colors shadow-sm">
-                    Entendi e fechar
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Header -->
-    <header class="bg-[#1c1c20] pt-safe px-4 pb-3 border-b border-gray-800 z-10 flex-shrink-0 shadow-lg">
-        <div class="flex justify-between items-center mt-2">
+    <header class="bg-[#1c1c20] pt-safe px-4 pb-3 border-b border-gray-800 z-10 flex-shrink-0 shadow-lg mt-14"> <div class="flex justify-between items-center mt-2">
             <div class="flex items-center gap-3">
                 <img src="icon-192.png" alt="Logo" class="w-12 h-12 rounded-xl shadow-lg border border-gray-700 object-cover">
                 <div>
@@ -255,7 +213,6 @@
             </div>
         </div>
 
-        <!-- Legenda -->
         <div class="flex overflow-x-auto no-scrollbar gap-2 mt-4 pb-1">
             <div class="flex-shrink-0 flex items-center gap-1.5 bg-gray-800/50 px-3 py-1.5 rounded-full border border-gray-700 text-[11px] whitespace-nowrap">
                 <div class="w-2.5 h-2.5 rounded-full bg-green-500"></div> Livre
@@ -275,10 +232,8 @@
         </div>
     </header>
 
-    <!-- Main Content -->
     <main class="flex-1 relative overflow-hidden flex flex-col">
 
-        <!-- Aba: Lista -->
         <div id="tab-list" class="absolute inset-0 overflow-y-auto no-scrollbar p-4 flex flex-col gap-4 bg-[#121214] animate-fade-in">
             <div class="relative sticky top-0 bg-[#121214] z-10 pb-2">
                 <i class="ph ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg pointer-events-none"></i>
@@ -291,20 +246,16 @@
                     aria-label="Buscar mesas">
             </div>
             <div id="list-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-24">
-                <!-- Populado via JavaScript -->
-            </div>
+                </div>
         </div>
 
-        <!-- Aba: Mapa (com imagem real da planta) -->
         <div id="tab-map" class="absolute inset-0 hidden overflow-auto no-scrollbar bg-[#111113]">
 
-            <!-- Aviso de arrastar -->
             <div class="p-3 flex justify-center items-center bg-black/50 text-xs text-gray-400 sticky top-0 z-10 backdrop-blur-md gap-2 h-10">
                 <i class="ph ph-hand-swipe-left text-base animate-pulse"></i>
                 <span>Arraste para navegar · Toque na mesa para detalhes</span>
             </div>
 
-            <!-- Container da Imagem + Pinos -->
             <div class="map-image-container p-4">
                 <img
                     src="mapa.png"
@@ -312,7 +263,6 @@
                     class="w-full rounded-2xl shadow-2xl border border-gray-700/50"
                     onerror="this.style.display='none'; document.getElementById('map-fallback').style.display='flex';">
 
-                <!-- Fallback caso a imagem não carregue -->
                 <div id="map-fallback" class="hidden w-full min-h-[300px] rounded-2xl bg-gray-900 border border-gray-700 items-center justify-center flex-col gap-3 p-8 text-center">
                     <i class="ph ph-image-broken text-5xl text-gray-600"></i>
                     <p class="text-gray-400 text-sm font-medium">Imagem da planta não carregou</p>
@@ -320,7 +270,6 @@
                 </div>
             </div>
 
-            <!-- Grade interativa de mesas (abaixo da imagem) -->
             <div class="px-4 pb-24 mt-2">
                 <div class="bg-gray-900/60 border border-gray-700/50 rounded-2xl p-5 backdrop-blur-sm">
                     <p class="text-xs text-gray-400 font-semibold uppercase tracking-wider mb-4 flex items-center gap-2">
@@ -328,13 +277,11 @@
                         Mesas Interativas — Toque para ver detalhes
                     </p>
 
-                    <!-- Setor A -->
                     <div class="mb-4">
                         <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-3">Setor A</p>
                         <div class="grid grid-cols-12 gap-y-4 gap-x-2" id="sector-a"></div>
                     </div>
 
-                    <!-- Divisor -->
                     <div class="flex justify-center gap-4 py-4 relative my-2">
                         <div class="absolute inset-0 flex items-center">
                             <div class="w-full border-t border-gray-700"></div>
@@ -351,7 +298,6 @@
                         </div>
                     </div>
 
-                    <!-- Setor B -->
                     <div class="mt-4">
                         <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-3">Setor B</p>
                         <div class="grid grid-cols-12 gap-y-4 gap-x-2" id="sector-b"></div>
@@ -361,7 +307,6 @@
         </div>
     </main>
 
-    <!-- Bottom Navigation -->
     <nav class="bg-[#1c1c20] border-t border-gray-800 flex justify-around pb-safe pt-2 px-2 z-20 absolute bottom-0 w-full h-[62px] shadow-2xl">
         <button onclick="switchTab('list')" id="nav-list"
             class="flex-1 flex flex-col items-center justify-center text-blue-500 py-1 rounded-lg transition-colors"
@@ -383,18 +328,14 @@
         </button>
     </nav>
 
-    <!-- Overlay do Bottom Sheet -->
     <div id="sheet-overlay" onclick="closeSheet()" class="overlay fixed inset-0 bg-black/60 z-40 backdrop-blur-sm"></div>
 
-    <!-- Bottom Sheet -->
     <div id="bottom-sheet" class="bottom-sheet fixed inset-x-0 bottom-0 bg-[#1c1c20] border-t border-gray-800 rounded-t-3xl z-50 flex flex-col max-h-[92vh] pb-safe shadow-2xl">
 
-        <!-- Handle -->
         <div class="w-full flex justify-center pt-3 pb-2 cursor-pointer" onclick="closeSheet()">
             <div class="w-12 h-1.5 bg-gray-600 rounded-full hover:bg-gray-500 transition-colors"></div>
         </div>
 
-        <!-- Header -->
         <div class="px-6 py-4 flex justify-between items-center border-b border-gray-800/50">
             <div class="flex items-center gap-3">
                 <div id="sheet-status-indicator" class="w-4 h-4 rounded-full bg-green-500 shadow-[0_0_12px_rgba(34,197,94,0.5)]"></div>
@@ -408,10 +349,8 @@
             </button>
         </div>
 
-        <!-- Conteúdo -->
         <div class="p-6 overflow-y-auto no-scrollbar flex-1 flex flex-col gap-6">
 
-            <!-- Status e Responsável -->
             <div class="flex flex-col gap-4">
                 <div class="flex flex-col gap-2">
                     <label class="text-[11px] text-gray-400 font-semibold uppercase tracking-wide">Status da Mesa</label>
@@ -432,7 +371,6 @@
                 </div>
             </div>
 
-            <!-- Financeiro (apenas admin) -->
             <div id="financial-section" class="hidden flex-col gap-4 bg-gray-900/30 p-5 rounded-2xl border border-gray-800/50">
                 <div class="flex items-center gap-2 mb-2">
                     <i class="ph ph-wallet text-xl text-blue-400"></i>
@@ -490,7 +428,6 @@
                 </div>
             </div>
 
-            <!-- Convidados -->
             <div class="flex flex-col gap-3">
                 <div class="flex items-center gap-2 mb-2">
                     <i class="ph ph-users-three text-xl text-blue-400"></i>
@@ -502,7 +439,6 @@
             <div class="h-6"></div>
         </div>
 
-        <!-- Footer Ações -->
         <div class="p-4 border-t border-gray-800 bg-[#1c1c20] flex-shrink-0 flex gap-3">
             <div id="view-actions" class="flex w-full gap-3">
                 <button onclick="showAuthModal()"
@@ -523,13 +459,11 @@
         </div>
     </div>
 
-    <!-- Toast -->
     <div id="toast" class="toast fixed left-1/2 w-[90%] max-w-sm p-4 text-white bg-green-600 rounded-2xl shadow-2xl flex items-center gap-3">
         <i class="ph ph-check-circle text-2xl flex-shrink-0"></i>
         <div class="text-sm font-semibold">Salvo com sucesso!</div>
     </div>
 
-    <!-- Scripts -->
     <script src="app.js" defer></script>
 </body>
 </html>
