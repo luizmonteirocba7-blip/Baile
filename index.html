@@ -306,8 +306,6 @@
 
             <!-- Container da Imagem + Pinos -->
             <div class="map-image-container p-4">
-
-                <!-- Imagem da Planta que você deve subir com nome mapa.png -->
                 <img
                     src="mapa.png"
                     alt="Planta do Evento - Baile Dom Pedro II"
@@ -531,14 +529,7 @@
         <div class="text-sm font-semibold">Salvo com sucesso!</div>
     </div>
 
-    <!-- Scripts e Service Worker -->
+    <!-- Scripts -->
     <script src="app.js" defer></script>
-    <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('service-worker.js')
-                .then(() => console.log('✓ Service Worker registrado'))
-                .catch(err => console.warn('Service Worker:', err));
-        }
-    </script>
 </body>
 </html>
