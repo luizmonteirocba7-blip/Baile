@@ -13,7 +13,6 @@
     <title>Baile Dom Pedro II - Gestão 2026</title>
 
     <link rel="manifest" href="manifest.json">
-    <!-- CORREÇÃO 2: Removido o 'assets/' para puxar da raiz conforme o seu GitHub -->
     <link rel="icon" type="image/png" href="icon-192.png">
     <link rel="apple-touch-icon" href="icon-192.png">
 
@@ -141,10 +140,8 @@
 <body class="h-screen w-screen flex flex-col overflow-hidden bg-[#121214]">
 
     <!-- Loading Overlay -->
-    <!-- NOTA: Seu app.js DEVE ter um código que esconde esta div, senão o app não aparece -->
     <div id="loading-overlay" class="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#121214] transition-opacity duration-500">
         <div class="flex flex-col items-center gap-4">
-            <!-- CORREÇÃO 2 -->
             <img src="icon-192.png" alt="Baile" class="w-16 h-16 rounded-2xl shadow-xl mb-2 animate-pulse">
             <div class="w-48 h-1 bg-gray-800 rounded-full overflow-hidden">
                 <div class="h-full bg-blue-500 rounded-full animate-[loading_1.5s_infinite]" style="background: linear-gradient(90deg, #1e1e24 0%, #3b82f6 50%, #1e1e24 100%); background-size: 200% 100%;"></div>
@@ -185,7 +182,6 @@
     <!-- BANNER DE INSTALAÇÃO - Android -->
     <div id="install-banner" class="install-banner fixed left-4 right-4 z-[90] shadow-2xl" style="bottom: 80px;">
         <div class="bg-gradient-to-r from-[#1c1c20] to-[#25252b] border border-blue-500/40 rounded-2xl p-4 flex items-center gap-3 shadow-[0_8px_32px_rgba(59,130,246,0.25)]">
-            <!-- CORREÇÃO 2 -->
             <img src="icon-192.png" alt="Ícone" class="w-12 h-12 rounded-xl flex-shrink-0 shadow-md">
             <div class="flex-1 min-w-0">
                 <p class="text-white font-bold text-sm leading-tight">Instalar App</p>
@@ -209,7 +205,6 @@
     <div id="ios-banner" class="ios-banner fixed left-4 right-4 z-[90] shadow-2xl" style="bottom: 80px;">
         <div class="bg-gradient-to-r from-[#1c1c20] to-[#25252b] border border-purple-500/40 rounded-2xl p-4 shadow-[0_8px_32px_rgba(168,85,247,0.2)]">
             <div class="flex items-center gap-3 mb-3">
-                <!-- CORREÇÃO 2 -->
                 <img src="icon-192.png" alt="Ícone" class="w-12 h-12 rounded-xl flex-shrink-0 shadow-md">
                 <div class="flex-1">
                     <p class="text-white font-bold text-sm">Instalar como App</p>
@@ -237,7 +232,6 @@
     <header class="bg-[#1c1c20] pt-safe px-4 pb-3 border-b border-gray-800 z-10 flex-shrink-0 shadow-lg">
         <div class="flex justify-between items-center mt-2">
             <div class="flex items-center gap-3">
-                <!-- CORREÇÃO 2 -->
                 <img src="icon-192.png" alt="Logo" class="w-12 h-12 rounded-xl shadow-lg border border-gray-700 object-cover">
                 <div>
                     <h1 class="text-base font-bold text-white leading-tight">Baile Dom Pedro II</h1>
@@ -310,8 +304,7 @@
             <!-- Container da Imagem + Pinos -->
             <div class="map-image-container p-4">
 
-                <!-- CORREÇÃO 1: Imagem agora aponta para um arquivo local que você deve subir no GitHub -->
-                <!-- Crie um arquivo chamado 'mapa.png' no mesmo diretório do index.html -->
+                <!-- Imagem da Planta que você deve subir com nome mapa.png -->
                 <img
                     src="mapa.png"
                     alt="Planta do Evento - Baile Dom Pedro II"
@@ -535,67 +528,9 @@
         <div class="text-sm font-semibold">Salvo com sucesso!</div>
     </div>
 
-    <!-- Scripts -->
+    <!-- Scripts e Service Worker -->
     <script src="app.js" defer></script>
-
     <script>
-        // =========================================
-        // PWA INSTALL BANNER
-        // =========================================
-        let deferredPrompt = null;
-
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-
-            if (!localStorage.getItem('install_dismissed')) {
-                setTimeout(() => {
-                    document.getElementById('install-banner').classList.add('show');
-                }, 2000); 
-            }
-        });
-
-        function installApp() {
-            if (!deferredPrompt) return;
-            deferredPrompt.prompt();
-            deferredPrompt.userChoice.then((result) => {
-                if (result.outcome === 'accepted') {
-                    document.getElementById('install-banner').classList.remove('show');
-                }
-                deferredPrompt = null;
-            });
-        }
-
-        function dismissInstallBanner() {
-            document.getElementById('install-banner').classList.remove('show');
-            localStorage.setItem('install_dismissed', 'true');
-        }
-
-        function dismissIosBanner() {
-            document.getElementById('ios-banner').classList.remove('show');
-            localStorage.setItem('ios_dismissed', 'true');
-        }
-
-        (function checkIos() {
-            const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
-            const isStandalone = window.navigator.standalone === true;
-            const dismissed = localStorage.getItem('ios_dismissed');
-
-            if (isIos && !isStandalone && !dismissed) {
-                setTimeout(() => {
-                    document.getElementById('ios-banner').classList.add('show');
-                }, 2000);
-            }
-        })();
-
-        window.addEventListener('appinstalled', () => {
-            document.getElementById('install-banner').classList.remove('show');
-            deferredPrompt = null;
-        });
-
-        // =========================================
-        // SERVICE WORKER
-        // =========================================
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('service-worker.js')
                 .then(() => console.log('✓ Service Worker registrado'))
