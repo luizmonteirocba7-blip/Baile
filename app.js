@@ -1,20 +1,31 @@
 // ============================================
-// MÓDULO PWA (FOCADO 100% NO ANDROID)
+// MÓDULO PWA (LÓGICA DE INSTALAÇÃO CORRIGIDA)
 // ============================================
-let deferredPrompt = null; // Variável global segura para não perder a função nativa
+let deferredPrompt = null;
 
 const PWA = {
     init() {
-        // 1. Intercepta o pedido oficial de instalação do Android
+        // 1. O SEGREDO DO SUCESSO: Registrar o Service Worker
+        // Sem isso aqui, o Android bloqueia a instalação!
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                // ATENÇÃO: Confirme se o nome do seu arquivo no GitHub é service-worker.js ou sw.js
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(() => console.log('Service Worker ativado com sucesso!'))
+                    .catch(err => console.error('Erro no Service Worker:', err));
+            });
+        }
+
+        // 2. Intercepta o evento nativo do Android
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
-            deferredPrompt = e; // Salva o evento nativo
+            deferredPrompt = e;
             
-            // Garante que a aba do iOS suma imediatamente se tentar aparecer
+            // Esconde a faixa do iOS se o Android assumir
             const iosBanner = document.getElementById('ios-banner');
             if (iosBanner) iosBanner.classList.remove('show');
             
-            // Mostra o nosso banner de instalação do Android
+            // Mostra o seu banner do Android
             if (!localStorage.getItem('install_dismissed')) {
                 setTimeout(() => {
                     const banner = document.getElementById('install-banner');
@@ -23,7 +34,7 @@ const PWA = {
             }
         });
 
-        // 2. Quando o app for instalado com sucesso
+        // 3. Sucesso na instalação
         window.addEventListener('appinstalled', () => {
             this.hideBanner('install-banner');
             deferredPrompt = null;
@@ -34,14 +45,15 @@ const PWA = {
     },
 
     async install() {
-        // Se o Android recusar abrir o prompt nativo, avisa o motivo
+        // Se o deferredPrompt estiver vazio, é porque está rodando no WhatsApp/Insta
+        // ou porque o Service Worker falhou.
         if (!deferredPrompt) {
-            showToast('O Chrome ainda não liberou a instalação. Limpe o cache e tente de novo!', 'warning');
+            showToast('Abra o link nativamente no Chrome ou Safari para instalar.', 'warning');
             return;
         }
         
         try {
-            // Dispara a janela nativa branca do Android (aquela que sobe debaixo)
+            // Dispara a janela oficial branca do Android
             deferredPrompt.prompt();
             const { outcome } = await deferredPrompt.userChoice;
             
@@ -63,7 +75,6 @@ const PWA = {
     },
 
     checkIos() {
-        // Detecção super restrita apenas para iPhones, ignorando Androids totalmente
         const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
         const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
         const dismissed = localStorage.getItem('ios_dismissed');
