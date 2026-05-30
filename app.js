@@ -76,7 +76,6 @@ const API = {
         return {};
     },
 
-    // CORREÇÃO BUG 5: spread operator garante que todos os campos sejam enviados
     async saveTable(table) {
         return await this.fetch('', { ...table });
     }
@@ -143,7 +142,6 @@ const Render = {
         this.list();
     },
 
-    // CORREÇÃO BUG 4: acumula HTML em arrays e atribui uma única vez
     map() {
         const sectorA = document.getElementById('sector-a');
         const sectorB = document.getElementById('sector-b');
@@ -399,7 +397,6 @@ const Save = {
         table.missingAmount = document.getElementById('sheet-missing-amount').value.trim();
         table.installmentsCount = document.getElementById('sheet-installments-count').value;
 
-        // CORREÇÃO BUG 6: proteção contra elemento null
         for (let i = 0; i < 10; i++) {
             const el = document.getElementById(`guest-${i}`);
             table.guests[i] = el ? el.value.trim() : '';
@@ -469,9 +466,6 @@ const PWA = {
             e.preventDefault();
             deferredPrompt = e;
 
-            const iosBanner = document.getElementById('ios-banner');
-            if (iosBanner) iosBanner.classList.remove('show');
-
             if (!localStorage.getItem('install_dismissed')) {
                 setTimeout(() => {
                     const banner = document.getElementById('install-banner');
@@ -485,8 +479,6 @@ const PWA = {
             deferredPrompt = null;
             showToast('App instalado com sucesso! ✓', 'success');
         });
-
-        this.checkIos();
     },
 
     async install() {
@@ -505,22 +497,7 @@ const PWA = {
     hideBanner(id) {
         const banner = document.getElementById(id);
         if (banner) banner.classList.remove('show');
-        localStorage.setItem(id === 'install-banner' ? 'install_dismissed' : 'ios_dismissed', 'true');
-    },
-
-    checkIos() {
-        const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
-        const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
-        const dismissed = localStorage.getItem('ios_dismissed');
-
-        if (isIos && !isStandalone && !dismissed) {
-            setTimeout(() => {
-                if (!deferredPrompt) {
-                    const banner = document.getElementById('ios-banner');
-                    if (banner) banner.classList.add('show');
-                }
-            }, 2500);
-        }
+        localStorage.setItem('install_dismissed', 'true');
     }
 };
 
@@ -540,7 +517,6 @@ window.togglePaymentFields = function() { Sheet.togglePaymentFields(); }
 window.renderInstallmentFields = function() { Sheet.renderInstallmentFields(); }
 window.installApp = function() { PWA.install(); }
 window.dismissInstallBanner = function() { PWA.hideBanner('install-banner'); }
-window.dismissIosBanner = function() { PWA.hideBanner('ios-banner'); }
 
 window.toggleSync = async function() {
     if (State.isSyncing) return;
@@ -578,7 +554,6 @@ async function initApp() {
         Render.all();
         Auth.updateUI();
 
-        // CORREÇÃO BUG 8: evento registrado após o DOM estar pronto
         document.getElementById('sheet-overlay')?.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
 
     } catch (error) {
