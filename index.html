@@ -2,326 +2,490 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Painel de Gestão - Baile de Gala</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#121214">
+    <meta name="description" content="Painel de Gestão - Baile de Gala Dom Pedro II 2026">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Baile 2026">
+
+    <title>Baile Dom Pedro II - Gestão 2026</title>
+
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="assets/icon-192.png">
+    <link rel="apple-touch-icon" href="assets/icon-192.png">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        
-        body {
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+        * { -webkit-tap-highlight-color: transparent; }
+
+        html, body {
+            height: 100%; width: 100%;
+            margin: 0; padding: 0;
             font-family: 'Inter', sans-serif;
             background-color: #121214;
             color: #e1e1e6;
-            -webkit-tap-highlight-color: transparent;
+            overflow: hidden;
         }
 
-        /* Oculta scrollbar para melhor visual mobile, mas permite o scroll */
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
 
-        .map-container {
-            background-image: radial-gradient(#3f3f46 1px, transparent 1px);
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+        .animate-fade-in { animation: fadeIn 0.3s ease-out; }
+        .animate-slide-up { animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+
+        /* Mapa */
+        .map-grid {
+            background-image: radial-gradient(circle, #3f3f46 0.5px, transparent 0.5px);
             background-size: 20px 20px;
             background-color: #1e1e24;
         }
 
+        /* Pinos de Mesa */
         .table-pin {
-            transition: transform 0.1s ease-in-out;
+            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+            will-change: transform;
+            touch-action: manipulation;
             cursor: pointer;
         }
-        
-        .table-pin:active {
-            transform: scale(0.95);
-        }
+        .table-pin:active { transform: scale(0.88); }
+        .table-pin:hover { filter: brightness(1.15); }
 
-        /* Estilo para campos travados (Visualização) */
-        input:read-only, select:disabled {
+        /* Bottom Sheet */
+        .bottom-sheet {
+            transform: translateY(100%);
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .bottom-sheet.active { transform: translateY(0); }
+
+        /* Overlay */
+        .overlay { opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        .overlay.active { opacity: 1; pointer-events: auto; }
+
+        /* Inputs */
+        input, select, textarea { font-family: inherit; }
+        input:disabled, select:disabled, textarea:disabled {
             background-color: transparent !important;
             border-color: transparent !important;
             color: #a1a1aa !important;
             cursor: default;
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
             padding-left: 0 !important;
             padding-right: 0 !important;
         }
-        
-        input[type="date"]::-webkit-calendar-picker-indicator {
-            filter: invert(1);
+        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            top: 1rem; left: 50%;
+            transform: translateX(-50%) translateY(-120%);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 300;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+        /* Safe Area */
+        @supports (padding: max(0px)) {
+            .pt-safe { padding-top: max(0.5rem, env(safe-area-inset-top)); }
+            .pb-safe { padding-bottom: max(0.5rem, env(safe-area-inset-bottom)); }
         }
 
-        /* Animações do Bottom Sheet */
-        .bottom-sheet {
-            transform: translateY(100%);
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        /* Banner de Instalação */
+        .install-banner {
+            transform: translateY(120%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .bottom-sheet.open {
-            transform: translateY(0);
+        .install-banner.show { transform: translateY(0); }
+
+        /* Banner iOS */
+        .ios-banner {
+            transform: translateY(120%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        
-        .overlay {
-            opacity: 0;
+        .ios-banner.show { transform: translateY(0); }
+
+        /* Mapa de imagem */
+        .map-image-container {
+            position: relative;
+            display: inline-block;
+            min-width: 900px;
+        }
+        .map-image-container img {
+            display: block;
+            width: 100%;
+            min-width: 900px;
+            opacity: 0.85;
+            border-radius: 12px;
+        }
+        .map-pins-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
             pointer-events: none;
-            transition: opacity 0.3s ease;
         }
-        .overlay.open {
-            opacity: 1;
+        .map-pins-overlay > * {
             pointer-events: auto;
         }
     </style>
 </head>
-<body class="h-[100dvh] flex flex-col overflow-hidden bg-[#121214]">
+<body class="h-screen w-screen flex flex-col overflow-hidden bg-[#121214]">
 
-    <!-- Loading -->
+    <!-- Loading Overlay -->
     <div id="loading-overlay" class="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#121214] transition-opacity duration-500">
-        <i class="ph ph-circle-notch animate-spin text-5xl text-blue-500 mb-4"></i>
-        <h2 class="text-lg font-semibold text-white tracking-wide">Sincronizando...</h2>
+        <div class="flex flex-col items-center gap-4">
+            <img src="assets/icon-192.png" alt="Baile" class="w-16 h-16 rounded-2xl shadow-xl mb-2 animate-pulse">
+            <div class="w-48 h-1 bg-gray-800 rounded-full overflow-hidden">
+                <div class="h-full bg-blue-500 rounded-full animate-[loading_1.5s_infinite]" style="background: linear-gradient(90deg, #1e1e24 0%, #3b82f6 50%, #1e1e24 100%); background-size: 200% 100%;"></div>
+            </div>
+            <h2 class="text-base font-semibold text-white tracking-wide mt-2">Sincronizando dados...</h2>
+        </div>
     </div>
 
-    <!-- Auth Modal Centralizado -->
-    <div id="auth-modal" class="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 p-4 opacity-0 pointer-events-none transition-opacity duration-300 backdrop-blur-sm">
-        <div class="bg-gray-800 p-6 rounded-2xl shadow-2xl w-full max-w-sm border border-gray-700 text-center transform scale-95 transition-transform duration-300" id="auth-content">
-            <i class="ph ph-lock-key text-4xl text-blue-500 mb-4"></i>
-            <h2 class="text-xl font-bold text-white mb-2">Acesso Restrito</h2>
-            <p class="text-gray-400 text-sm mb-6">Digite a senha para gerenciar.</p>
-            
-            <input type="password" id="auth-password" inputmode="numeric" class="w-full bg-gray-900 border border-gray-600 text-white rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent block p-4 outline-none mb-2 text-center text-lg tracking-widest" placeholder="••••••••">
-            <p id="auth-error" class="text-red-500 text-xs font-semibold mb-4 hidden animate-pulse">Senha incorreta.</p>
-            
+    <!-- Auth Modal -->
+    <div id="auth-modal" class="overlay fixed inset-0 z-[200] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+        <div class="bg-gray-900 p-8 rounded-3xl shadow-2xl w-full max-w-sm border border-gray-800 text-center" id="auth-content">
+            <div class="w-16 h-16 bg-blue-500/20 border border-blue-500/30 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <i class="ph ph-lock-key text-3xl text-blue-400"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-white mb-2">Acesso Restrito</h2>
+            <p class="text-gray-400 text-sm mb-8">Digite a senha para gerenciar as mesas.</p>
+            <input
+                type="password"
+                id="auth-password"
+                inputmode="numeric"
+                maxlength="12"
+                onkeydown="if(event.key==='Enter') authenticate()"
+                class="w-full bg-gray-800 border border-gray-700 text-white rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent block p-4 outline-none text-center text-lg tracking-widest transition-all mb-2"
+                placeholder="••••••••"
+                aria-label="Senha de acesso">
+            <p id="auth-error" class="text-red-400 text-sm font-medium hidden mb-4">Senha incorreta. Tente novamente.</p>
             <div class="flex gap-3 mt-4">
-                <button onclick="closeAuthModal()" class="flex-1 py-3 text-sm font-medium text-gray-300 bg-gray-700 rounded-xl hover:bg-gray-600 transition-colors">Cancelar</button>
-                <button onclick="authenticate()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-colors">Desbloquear</button>
+                <button onclick="closeAuthModal()" class="flex-1 py-3 text-sm font-semibold text-gray-300 bg-gray-800 rounded-xl hover:bg-gray-700 transition-colors active:bg-gray-600">
+                    Cancelar
+                </button>
+                <button onclick="authenticate()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-colors active:bg-blue-800">
+                    Desbloquear
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- Header Mobile -->
-    <header class="bg-[#1c1c20] pt-safe px-4 pb-3 flex-shrink-0 border-b border-gray-800 z-10">
-        <div class="flex justify-between items-center mt-4 md:mt-2">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center border border-gray-700 overflow-hidden">
-                    <img src="https://drive.google.com/thumbnail?id=18jejAaZU9pPJbyuF4PHM4aGkwp9G2zAD&sz=w100" alt="Logo" class="w-full h-full object-cover">
+    <!-- ================================ -->
+    <!-- BANNER DE INSTALAÇÃO - Android   -->
+    <!-- ================================ -->
+    <div id="install-banner" class="install-banner fixed left-4 right-4 z-[90] shadow-2xl" style="bottom: 80px;">
+        <div class="bg-gradient-to-r from-[#1c1c20] to-[#25252b] border border-blue-500/40 rounded-2xl p-4 flex items-center gap-3 shadow-[0_8px_32px_rgba(59,130,246,0.25)]">
+            <img src="assets/icon-192.png" alt="Ícone" class="w-12 h-12 rounded-xl flex-shrink-0 shadow-md">
+            <div class="flex-1 min-w-0">
+                <p class="text-white font-bold text-sm leading-tight">Instalar App</p>
+                <p class="text-gray-400 text-xs mt-0.5">Adicionar à tela inicial do celular</p>
+            </div>
+            <button
+                onclick="installApp()"
+                class="bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white px-4 py-2.5 rounded-xl text-sm font-bold transition-colors flex-shrink-0 shadow-lg">
+                Instalar
+            </button>
+            <button
+                onclick="dismissInstallBanner()"
+                class="text-gray-500 hover:text-gray-300 p-1 flex-shrink-0 transition-colors"
+                aria-label="Fechar banner">
+                <i class="ph ph-x text-lg"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- ================================ -->
+    <!-- BANNER DE INSTALAÇÃO - iOS       -->
+    <!-- ================================ -->
+    <div id="ios-banner" class="ios-banner fixed left-4 right-4 z-[90] shadow-2xl" style="bottom: 80px;">
+        <div class="bg-gradient-to-r from-[#1c1c20] to-[#25252b] border border-purple-500/40 rounded-2xl p-4 shadow-[0_8px_32px_rgba(168,85,247,0.2)]">
+            <div class="flex items-center gap-3 mb-3">
+                <img src="assets/icon-192.png" alt="Ícone" class="w-12 h-12 rounded-xl flex-shrink-0 shadow-md">
+                <div class="flex-1">
+                    <p class="text-white font-bold text-sm">Instalar como App</p>
+                    <p class="text-gray-400 text-xs mt-0.5">Siga os passos abaixo</p>
                 </div>
+                <button onclick="dismissIosBanner()" class="text-gray-500 hover:text-gray-300 p-1 transition-colors" aria-label="Fechar">
+                    <i class="ph ph-x text-lg"></i>
+                </button>
+            </div>
+            <div class="flex items-center gap-2 bg-gray-800/60 rounded-xl p-3">
+                <span class="text-gray-300 text-xs">
+                    1. Toque em
+                    <span class="inline-flex items-center gap-1 bg-gray-700 px-2 py-0.5 rounded-lg mx-1">
+                        <i class="ph ph-export text-blue-400"></i>
+                        <span class="text-white font-medium">Compartilhar</span>
+                    </span>
+                    2. Selecione
+                    <span class="bg-gray-700 px-2 py-0.5 rounded-lg mx-1 text-white font-medium">"Tela Inicial"</span>
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="bg-[#1c1c20] pt-safe px-4 pb-3 border-b border-gray-800 z-10 flex-shrink-0 shadow-lg">
+        <div class="flex justify-between items-center mt-2">
+            <div class="flex items-center gap-3">
+                <img src="assets/icon-192.png" alt="Logo" class="w-12 h-12 rounded-xl shadow-lg border border-gray-700 object-cover">
                 <div>
                     <h1 class="text-base font-bold text-white leading-tight">Baile Dom Pedro II</h1>
                     <p class="text-[11px] text-gray-400">Gestão 2026</p>
                 </div>
             </div>
-            <button onclick="showAuthModal()" id="btn-unlock" class="w-9 h-9 flex items-center justify-center bg-gray-800 text-blue-400 rounded-full border border-gray-700 shadow-sm active:bg-gray-700">
-                <i class="ph ph-lock-key text-lg"></i>
-            </button>
-            <div id="badge-unlocked" class="hidden items-center gap-1 bg-green-500/20 text-green-400 px-3 py-1.5 rounded-full border border-green-500/30 text-xs font-bold">
-                <i class="ph ph-check-circle"></i> Admin
+            <div class="flex items-center gap-2">
+                <button
+                    onclick="showAuthModal()"
+                    id="btn-unlock"
+                    class="w-10 h-10 flex items-center justify-center bg-gray-800 hover:bg-gray-700 text-blue-400 rounded-full border border-gray-700 shadow-md active:bg-gray-600 transition-colors"
+                    aria-label="Desbloquear acesso de edição">
+                    <i class="ph ph-lock-key text-lg"></i>
+                </button>
+                <div id="badge-unlocked" class="hidden items-center gap-1.5 bg-green-500/20 text-green-400 px-3 py-1.5 rounded-full border border-green-500/30 text-xs font-bold">
+                    <i class="ph ph-check-circle"></i> Admin
+                </div>
             </div>
         </div>
 
-        <!-- Legenda Horizontal Rolável -->
+        <!-- Legenda -->
         <div class="flex overflow-x-auto no-scrollbar gap-2 mt-4 pb-1">
-            <div class="flex-shrink-0 flex items-center gap-1.5 bg-gray-800/50 px-3 py-1.5 rounded-full border border-gray-700 text-[11px]">
+            <div class="flex-shrink-0 flex items-center gap-1.5 bg-gray-800/50 px-3 py-1.5 rounded-full border border-gray-700 text-[11px] whitespace-nowrap">
                 <div class="w-2.5 h-2.5 rounded-full bg-green-500"></div> Livre
             </div>
-            <div class="flex-shrink-0 flex items-center gap-1.5 bg-gray-800/50 px-3 py-1.5 rounded-full border border-gray-700 text-[11px]">
+            <div class="flex-shrink-0 flex items-center gap-1.5 bg-gray-800/50 px-3 py-1.5 rounded-full border border-gray-700 text-[11px] whitespace-nowrap">
                 <div class="w-2.5 h-2.5 rounded-full bg-purple-500"></div> Negociação
             </div>
-            <div class="flex-shrink-0 flex items-center gap-1.5 bg-gray-800/50 px-3 py-1.5 rounded-full border border-gray-700 text-[11px]">
+            <div class="flex-shrink-0 flex items-center gap-1.5 bg-gray-800/50 px-3 py-1.5 rounded-full border border-gray-700 text-[11px] whitespace-nowrap">
                 <div class="w-2.5 h-2.5 rounded-full bg-orange-500"></div> Reservada
             </div>
-            <div class="flex-shrink-0 flex items-center gap-1.5 bg-gray-800/50 px-3 py-1.5 rounded-full border border-gray-700 text-[11px]">
+            <div class="flex-shrink-0 flex items-center gap-1.5 bg-gray-800/50 px-3 py-1.5 rounded-full border border-gray-700 text-[11px] whitespace-nowrap">
                 <div class="w-2.5 h-2.5 rounded-full bg-cyan-500"></div> Patrocínio
             </div>
-            <div class="flex-shrink-0 flex items-center gap-1.5 bg-gray-800/50 px-3 py-1.5 rounded-full border border-gray-700 text-[11px]">
+            <div class="flex-shrink-0 flex items-center gap-1.5 bg-gray-800/50 px-3 py-1.5 rounded-full border border-gray-700 text-[11px] whitespace-nowrap">
                 <div class="w-2.5 h-2.5 rounded-full bg-gray-400"></div> Bloqueada
             </div>
         </div>
     </header>
 
-    <!-- Content Area (Abas) -->
+    <!-- Main Content -->
     <main class="flex-1 relative overflow-hidden flex flex-col">
-        
-        <!-- Aba 1: Lista (Melhor para mobile) -->
-        <div id="tab-list" class="absolute inset-0 overflow-y-auto no-scrollbar p-4 flex flex-col gap-4 bg-[#121214]">
-            
-            <div class="relative">
-                <i class="ph ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg"></i>
-                <input type="text" id="search-input" onkeyup="filterList()" placeholder="Buscar mesa ou responsável..." class="w-full bg-[#1c1c20] border border-gray-800 text-white rounded-2xl pl-11 pr-4 py-3.5 focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm">
-            </div>
 
+        <!-- Aba: Lista -->
+        <div id="tab-list" class="absolute inset-0 overflow-y-auto no-scrollbar p-4 flex flex-col gap-4 bg-[#121214] animate-fade-in">
+            <div class="relative sticky top-0 bg-[#121214] z-5 pb-2">
+                <i class="ph ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg pointer-events-none"></i>
+                <input
+                    type="text"
+                    id="search-input"
+                    onkeyup="filterList()"
+                    placeholder="Buscar mesa ou responsável..."
+                    class="w-full bg-[#1c1c20] border border-gray-800 text-white rounded-2xl pl-11 pr-4 py-3.5 focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm transition-all"
+                    aria-label="Buscar mesas">
+            </div>
             <div id="list-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-24">
-                <!-- Populado via JS -->
+                <!-- Populado via JavaScript -->
             </div>
         </div>
 
-        <!-- Aba 2: Mapa (Arrastável) -->
-        <div id="tab-map" class="absolute inset-0 hidden overflow-auto no-scrollbar bg-[#1e1e24]">
-            <div class="p-4 flex justify-center items-center h-10 bg-black/40 text-xs text-gray-400 sticky top-0 z-10 backdrop-blur-md">
-                <i class="ph ph-hand-swipe-left mr-2 text-lg animate-pulse"></i> Arraste para navegar pela planta
+        <!-- Aba: Mapa (com imagem real da planta) -->
+        <div id="tab-map" class="absolute inset-0 hidden overflow-auto no-scrollbar bg-[#111113]">
+
+            <!-- Aviso de arrastar -->
+            <div class="p-3 flex justify-center items-center bg-black/50 text-xs text-gray-400 sticky top-0 z-10 backdrop-blur-md gap-2 h-10">
+                <i class="ph ph-hand-swipe-left text-base animate-pulse"></i>
+                <span>Arraste para navegar · Toque na mesa para detalhes</span>
             </div>
-            <div class="map-container relative min-w-[900px] flex gap-4 p-6 min-h-[600px]">
-                <!-- Estrutura do Mapa Original Adaptada -->
-                <div class="w-40 flex flex-col justify-between border-r-2 border-dashed border-gray-600 pr-6 py-12 relative flex-shrink-0">
-                    <div class="border border-gray-600 rounded-xl p-3 text-center bg-gray-800/80 backdrop-blur-sm mb-10">
-                        <span class="block text-[10px] font-bold text-gray-400 uppercase mb-3">Espaço Kopenhagen</span>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div class="h-6 bg-orange-500/50 rounded-md"></div>
-                            <div class="h-6 bg-orange-500/50 rounded-md"></div>
-                            <div class="h-6 bg-orange-500/50 rounded-md"></div>
-                            <div class="h-6 bg-orange-500/50 rounded-md"></div>
-                        </div>
-                    </div>
-                    <div class="mt-auto space-y-3">
-                        <div class="border border-gray-600 rounded-lg p-2 text-center text-[10px] font-bold bg-gray-800/80 text-gray-300">
-                            Lona de Foto<br>Receptivo
-                        </div>
-                        <div class="flex justify-between items-end gap-2">
-                            <div class="w-8 h-8 rounded-full bg-gray-700 border border-gray-500 text-white text-[8px] flex items-center justify-center text-center p-1 leading-tight flex-shrink-0">Drink</div>
-                            <div class="flex-1 bg-red-700/80 border border-red-500 h-20 rounded-t-lg flex items-center justify-center text-white text-[10px] font-bold transform -skew-x-2">Carpete</div>
-                            <div class="w-8 h-8 rounded-full bg-gray-700 border border-gray-500 text-white text-[8px] flex items-center justify-center text-center p-1 leading-tight flex-shrink-0">Drink</div>
-                        </div>
-                    </div>
-                </div>
 
-                <div class="flex-1 flex flex-col justify-center gap-10 py-12 min-w-[500px]">
-                    <div class="grid grid-cols-12 gap-y-5 gap-x-3 px-2" id="sector-a"></div>
-                    <div class="flex justify-center gap-6 py-4 relative">
-                        <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-600 dashed"></div></div>
-                        <div class="bg-gray-800 border border-gray-600 rounded-full h-12 w-40 flex items-center justify-center relative z-10">
-                            <span class="text-xs font-bold text-gray-300 flex items-center"><i class="ph ph-fork-knife mr-2 text-lg"></i>Ilha Buffet</span>
-                        </div>
-                        <div class="bg-gray-800 border border-gray-600 rounded-full h-12 w-40 flex items-center justify-center relative z-10">
-                            <span class="text-xs font-bold text-gray-300 flex items-center"><i class="ph ph-fork-knife mr-2 text-lg"></i>Ilha Buffet</span>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-12 gap-y-5 gap-x-3 px-2" id="sector-b"></div>
-                </div>
+            <!-- Container da Imagem + Pinos -->
+            <div class="map-image-container p-4">
 
-                <div class="w-48 flex flex-col justify-center gap-4 pl-6 border-l-2 border-dashed border-gray-600 relative py-10 flex-shrink-0">
-                    <div class="bg-blue-900/40 border border-blue-500/30 text-blue-200 text-center py-3 rounded-xl font-semibold text-xs">
-                        <i class="ph ph-martini align-middle text-lg mr-1"></i> Bar Drinks
+                <!-- Imagem real da planta do evento -->
+                <img
+                    src="https://drive.google.com/thumbnail?id=17OaE3XgRAq2a7rh4hXbBDVIcaX423vN5&sz=w2000"
+                    alt="Planta do Evento - Baile Dom Pedro II"
+                    class="w-full rounded-2xl shadow-2xl border border-gray-700/50"
+                    onerror="this.style.display='none'; document.getElementById('map-fallback').style.display='flex';">
+
+                <!-- Fallback caso a imagem não carregue -->
+                <div id="map-fallback" class="hidden w-full min-h-[300px] rounded-2xl bg-gray-900 border border-gray-700 items-center justify-center flex-col gap-3 p-8 text-center">
+                    <i class="ph ph-image-broken text-5xl text-gray-600"></i>
+                    <p class="text-gray-400 text-sm font-medium">Imagem da planta não carregou</p>
+                    <p class="text-gray-600 text-xs">Verifique se o arquivo está público no Google Drive</p>
+                </div>
+            </div>
+
+            <!-- Grade interativa de mesas (abaixo da imagem) -->
+            <div class="px-4 pb-24 mt-2">
+                <div class="bg-gray-900/60 border border-gray-700/50 rounded-2xl p-5 backdrop-blur-sm">
+                    <p class="text-xs text-gray-400 font-semibold uppercase tracking-wider mb-4 flex items-center gap-2">
+                        <i class="ph ph-circles-four text-blue-400"></i>
+                        Mesas Interativas — Toque para ver detalhes
+                    </p>
+
+                    <!-- Setor A -->
+                    <div class="mb-4">
+                        <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-3">Setor A</p>
+                        <div class="grid grid-cols-12 gap-y-4 gap-x-2" id="sector-a"></div>
                     </div>
-                    <div class="flex-1 flex flex-row items-stretch gap-3 my-2 min-h-[300px]">
-                        <div class="w-12 bg-gray-800/80 border border-gray-600 rounded-xl flex items-center justify-center">
-                            <span class="rotate-[-90deg] whitespace-nowrap font-bold text-gray-400 tracking-widest uppercase text-xs">Pista</span>
+
+                    <!-- Divisor -->
+                    <div class="flex justify-center gap-4 py-4 relative my-2">
+                        <div class="absolute inset-0 flex items-center">
+                            <div class="w-full border-t border-gray-700"></div>
                         </div>
-                        <div class="flex-1 bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-600 rounded-2xl flex items-center justify-center flex-col relative overflow-hidden">
-                            <i class="ph ph-microphone-stage text-4xl text-gray-500 mb-2"></i>
-                            <span class="font-bold text-gray-300 tracking-wider text-lg">PALCO</span>
+                        <div class="bg-gray-900 border border-gray-600 rounded-full h-10 w-36 flex items-center justify-center relative z-10">
+                            <span class="text-xs font-bold text-gray-400 flex items-center gap-1.5">
+                                <i class="ph ph-fork-knife text-base"></i>Ilha Buffet
+                            </span>
+                        </div>
+                        <div class="bg-gray-900 border border-gray-600 rounded-full h-10 w-36 flex items-center justify-center relative z-10">
+                            <span class="text-xs font-bold text-gray-400 flex items-center gap-1.5">
+                                <i class="ph ph-fork-knife text-base"></i>Ilha Buffet
+                            </span>
                         </div>
                     </div>
-                    <div class="bg-blue-900/40 border border-blue-500/30 text-blue-200 text-center py-3 rounded-xl font-semibold text-xs">
-                        <i class="ph ph-martini align-middle text-lg mr-1"></i> Bar Drinks
+
+                    <!-- Setor B -->
+                    <div class="mt-4">
+                        <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-3">Setor B</p>
+                        <div class="grid grid-cols-12 gap-y-4 gap-x-2" id="sector-b"></div>
                     </div>
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- Navegação Inferior (Bottom Navigation) -->
-    <nav class="bg-[#1c1c20] border-t border-gray-800 flex justify-around pb-safe pt-2 px-2 z-20 absolute bottom-0 w-full h-[60px] md:h-[70px]">
-        <button onclick="switchTab('list')" id="nav-list" class="flex-1 flex flex-col items-center justify-center text-blue-500 transition-colors py-1">
-            <i class="ph-fill ph-list-dashes text-2xl mb-1"></i>
-            <span class="text-[10px] font-medium">Lista</span>
+    <!-- Bottom Navigation -->
+    <nav class="bg-[#1c1c20] border-t border-gray-800 flex justify-around pb-safe pt-2 px-2 z-20 absolute bottom-0 w-full h-[62px] shadow-2xl">
+        <button onclick="switchTab('list')" id="nav-list"
+            class="flex-1 flex flex-col items-center justify-center text-blue-500 py-1 rounded-lg transition-colors"
+            aria-label="Lista de mesas">
+            <i class="ph-fill ph-list-dashes text-2xl mb-0.5"></i>
+            <span class="text-[10px] font-semibold">Lista</span>
         </button>
-        <button onclick="switchTab('map')" id="nav-map" class="flex-1 flex flex-col items-center justify-center text-gray-500 hover:text-gray-300 transition-colors py-1">
-            <i class="ph ph-map-trifold text-2xl mb-1"></i>
-            <span class="text-[10px] font-medium">Planta</span>
+        <button onclick="switchTab('map')" id="nav-map"
+            class="flex-1 flex flex-col items-center justify-center text-gray-500 hover:text-gray-300 py-1 rounded-lg transition-colors"
+            aria-label="Planta do evento">
+            <i class="ph ph-map-trifold text-2xl mb-0.5"></i>
+            <span class="text-[10px] font-semibold">Planta</span>
+        </button>
+        <button onclick="toggleSync()" id="nav-sync"
+            class="flex-1 flex flex-col items-center justify-center text-gray-500 hover:text-gray-300 py-1 rounded-lg transition-colors"
+            aria-label="Sincronizar dados">
+            <i class="ph ph-arrow-clockwise text-2xl mb-0.5"></i>
+            <span class="text-[10px] font-semibold">Sync</span>
         </button>
     </nav>
 
     <!-- Overlay do Bottom Sheet -->
     <div id="sheet-overlay" onclick="closeSheet()" class="overlay fixed inset-0 bg-black/60 z-40 backdrop-blur-sm"></div>
 
-    <!-- Bottom Sheet (Substitui o Modal) -->
-    <div id="bottom-sheet" class="bottom-sheet fixed inset-x-0 bottom-0 bg-[#1c1c20] border-t border-gray-800 rounded-t-3xl z-50 flex flex-col max-h-[90vh] pb-safe shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
-        
-        <!-- Puxador (Drag Handle) visual -->
-        <div class="w-full flex justify-center pt-3 pb-1" onclick="closeSheet()">
-            <div class="w-12 h-1.5 bg-gray-600 rounded-full"></div>
+    <!-- Bottom Sheet -->
+    <div id="bottom-sheet" class="bottom-sheet fixed inset-x-0 bottom-0 bg-[#1c1c20] border-t border-gray-800 rounded-t-3xl z-50 flex flex-col max-h-[92vh] pb-safe shadow-2xl">
+
+        <!-- Handle -->
+        <div class="w-full flex justify-center pt-3 pb-2 cursor-pointer" onclick="closeSheet()">
+            <div class="w-12 h-1.5 bg-gray-600 rounded-full hover:bg-gray-500 transition-colors"></div>
         </div>
 
-        <!-- Header da Mesa -->
-        <div class="px-6 py-3 flex justify-between items-center border-b border-gray-800/50">
+        <!-- Header -->
+        <div class="px-6 py-4 flex justify-between items-center border-b border-gray-800/50">
             <div class="flex items-center gap-3">
-                <div id="sheet-status-indicator" class="w-3.5 h-3.5 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.3)]"></div>
-                <h3 class="text-xl font-bold text-white" id="sheet-title">Mesa 00</h3>
-                <span id="edit-badge" class="hidden bg-blue-500/20 text-blue-400 border border-blue-500/30 text-[10px] uppercase font-bold px-2 py-0.5 rounded ml-2">Edição</span>
+                <div id="sheet-status-indicator" class="w-4 h-4 rounded-full bg-green-500 shadow-[0_0_12px_rgba(34,197,94,0.5)]"></div>
+                <div>
+                    <h3 class="text-2xl font-bold text-white" id="sheet-title">Mesa 00</h3>
+                    <span id="edit-badge" class="hidden text-[10px] uppercase font-bold text-blue-400 mt-0.5">Modo Edição Ativo</span>
+                </div>
             </div>
-            <button onclick="closeSheet()" class="w-8 h-8 flex items-center justify-center bg-gray-800 text-gray-400 rounded-full active:bg-gray-700">
-                <i class="ph ph-x text-sm"></i>
+            <button onclick="closeSheet()" class="w-9 h-9 flex items-center justify-center bg-gray-800 hover:bg-gray-700 text-gray-400 rounded-full active:bg-gray-600 transition-colors" aria-label="Fechar">
+                <i class="ph ph-x text-lg"></i>
             </button>
         </div>
 
-        <!-- Conteúdo Rolável -->
+        <!-- Conteúdo -->
         <div class="p-6 overflow-y-auto no-scrollbar flex-1 flex flex-col gap-6">
-            
-            <!-- Bloco Principal -->
-            <div class="flex flex-col gap-5">
+
+            <!-- Status e Responsável -->
+            <div class="flex flex-col gap-4">
                 <div class="flex flex-col gap-2">
-                    <label class="text-[11px] text-gray-400 font-medium uppercase tracking-wider">Status da Mesa</label>
-                    <select id="sheet-status" class="w-full bg-[#121214] border border-gray-700 text-white text-sm rounded-xl p-3.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none disabled:opacity-50 appearance-none">
-                        <option value="livre">Livre</option>
-                        <option value="negociacao">Em negociação</option>
-                        <option value="reservada">Reservada</option>
-                        <option value="patrocinio">Patrocínio</option>
-                        <option value="bloqueada">Bloqueada</option>
+                    <label class="text-[11px] text-gray-400 font-semibold uppercase tracking-wide">Status da Mesa</label>
+                    <select id="sheet-status" class="w-full bg-[#121214] border border-gray-700 text-white text-sm rounded-xl p-3.5 focus:ring-2 focus:ring-blue-500 outline-none disabled:opacity-50 transition-all appearance-none">
+                        <option value="livre">✓ Livre</option>
+                        <option value="negociacao">◐ Em Negociação</option>
+                        <option value="reservada">◆ Reservada</option>
+                        <option value="patrocinio">★ Patrocínio</option>
+                        <option value="bloqueada">✕ Bloqueada</option>
                     </select>
                 </div>
 
                 <div class="flex flex-col gap-2">
-                    <label class="text-[11px] text-gray-400 font-medium uppercase tracking-wider">Responsável (Militar/Civil)</label>
-                    <input type="text" id="sheet-identification" class="w-full bg-[#121214] border border-gray-700 text-white text-sm rounded-xl p-3.5 focus:ring-2 focus:ring-blue-500 outline-none placeholder-gray-600" placeholder="Nome ou ID...">
+                    <label class="text-[11px] text-gray-400 font-semibold uppercase tracking-wide">Responsável</label>
+                    <input type="text" id="sheet-identification"
+                        class="w-full bg-[#121214] border border-gray-700 text-white text-sm rounded-xl p-3.5 focus:ring-2 focus:ring-blue-500 outline-none placeholder-gray-600 transition-all"
+                        placeholder="Nome ou ID..." maxlength="50">
                 </div>
             </div>
 
-            <!-- Bloco Financeiro (Oculto se não for editor) -->
-            <div id="financial-section" class="hidden flex-col gap-5 bg-gray-800/30 p-5 rounded-2xl border border-gray-800">
-                <div class="flex items-center gap-2 mb-1">
+            <!-- Financeiro (apenas admin) -->
+            <div id="financial-section" class="hidden flex-col gap-4 bg-gray-900/30 p-5 rounded-2xl border border-gray-800/50">
+                <div class="flex items-center gap-2 mb-2">
                     <i class="ph ph-wallet text-xl text-blue-400"></i>
-                    <h4 class="text-sm font-bold text-white">Financeiro</h4>
+                    <h4 class="text-sm font-bold text-white">Informações Financeiras</h4>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
-                    <div class="flex flex-col gap-2 col-span-2">
-                        <label class="text-[11px] text-gray-400 font-medium uppercase">Vendedor(a)</label>
-                        <select id="sheet-seller" onchange="toggleSellerOther()" class="w-full bg-[#121214] border border-gray-700 text-white text-sm rounded-xl p-3 outline-none disabled:opacity-50">
-                            <option value="">Não informado</option>
+                    <div class="col-span-2 flex flex-col gap-2">
+                        <label class="text-[11px] text-gray-400 font-semibold uppercase">Vendedor(a)</label>
+                        <select id="sheet-seller" onchange="toggleSellerOther()" class="w-full bg-[#121214] border border-gray-700 text-white text-sm rounded-xl p-3 outline-none disabled:opacity-50 transition-all">
+                            <option value="">— Não informado</option>
                             <option value="MAJ Tamara">MAJ Tamara</option>
                             <option value="SGT Ferro">SGT Ferro</option>
                             <option value="Outros">Outros...</option>
                         </select>
-                        <input type="text" id="sheet-seller-other" class="hidden mt-2 w-full bg-[#121214] border border-gray-700 text-white text-sm rounded-xl p-3 outline-none" placeholder="Nome do vendedor...">
+                        <input type="text" id="sheet-seller-other"
+                            class="hidden mt-2 w-full bg-[#121214] border border-gray-700 text-white text-sm rounded-xl p-3 outline-none transition-all"
+                            placeholder="Nome do vendedor..." maxlength="50">
                     </div>
 
                     <div class="flex flex-col gap-2">
-                        <label class="text-[11px] text-gray-400 font-medium uppercase">Data Venda</label>
-                        <input type="date" id="sheet-sale-date" class="w-full bg-[#121214] border border-gray-700 text-white text-sm rounded-xl p-3 outline-none">
+                        <label class="text-[11px] text-gray-400 font-semibold uppercase">Data Venda</label>
+                        <input type="date" id="sheet-sale-date" class="w-full bg-[#121214] border border-gray-700 text-white text-sm rounded-xl p-3 outline-none transition-all">
                     </div>
 
                     <div class="flex flex-col gap-2">
                         <label class="text-[11px] text-red-400 font-bold uppercase">Falta Pagar</label>
-                        <input type="text" id="sheet-missing-amount" class="w-full bg-red-500/10 border border-red-500/30 text-red-100 text-sm rounded-xl p-3 outline-none placeholder-red-900" placeholder="R$ 0,00">
+                        <input type="text" id="sheet-missing-amount"
+                            class="w-full bg-red-500/10 border border-red-500/30 text-red-100 text-sm rounded-xl p-3 outline-none placeholder-red-900 focus:ring-2 focus:ring-red-500 transition-all"
+                            placeholder="R$ 0,00" maxlength="20">
                     </div>
 
-                    <div class="flex flex-col gap-2 col-span-2">
-                        <label class="text-[11px] text-gray-400 font-medium uppercase">Pagamento</label>
-                        <select id="sheet-payment-method" onchange="togglePaymentFields()" class="w-full bg-[#121214] border border-gray-700 text-white text-sm rounded-xl p-3 outline-none disabled:opacity-50">
-                            <option value="">Não informado</option>
-                            <option value="avista">À vista</option>
+                    <div class="col-span-2 flex flex-col gap-2">
+                        <label class="text-[11px] text-gray-400 font-semibold uppercase">Tipo Pagamento</label>
+                        <select id="sheet-payment-method" onchange="togglePaymentFields()" class="w-full bg-[#121214] border border-gray-700 text-white text-sm rounded-xl p-3 outline-none disabled:opacity-50 transition-all">
+                            <option value="">— Não informado</option>
+                            <option value="avista">À Vista</option>
                             <option value="parcelado">Parcelado</option>
                         </select>
                     </div>
 
                     <div id="installments-wrapper" class="hidden col-span-2 flex flex-col gap-4 border-t border-gray-700 pt-4 mt-2">
                         <div class="flex flex-col gap-2">
-                            <label class="text-[11px] text-gray-400 font-medium uppercase">Parcelas</label>
-                            <select id="sheet-installments-count" onchange="renderInstallmentFields()" class="w-full bg-[#121214] border border-gray-700 text-white text-sm rounded-xl p-3 outline-none disabled:opacity-50">
-                                <option value="2">2x</option><option value="3">3x</option><option value="4">4x</option><option value="5">5x</option>
+                            <label class="text-[11px] text-gray-400 font-semibold uppercase">Quantidade de Parcelas</label>
+                            <select id="sheet-installments-count" onchange="renderInstallmentFields()" class="w-full bg-[#121214] border border-gray-700 text-white text-sm rounded-xl p-3 outline-none disabled:opacity-50 transition-all">
+                                <option value="2">2x</option>
+                                <option value="3">3x</option>
+                                <option value="4">4x</option>
+                                <option value="5">5x</option>
+                                <option value="6">6x</option>
                             </select>
                         </div>
                         <div id="installments-inputs-container" class="grid grid-cols-2 gap-3"></div>
@@ -329,470 +493,118 @@
                 </div>
             </div>
 
-            <!-- Lista de Convidados -->
+            <!-- Convidados -->
             <div class="flex flex-col gap-3">
                 <div class="flex items-center gap-2 mb-2">
                     <i class="ph ph-users-three text-xl text-blue-400"></i>
-                    <h4 class="text-sm font-bold text-white">Convidados (10)</h4>
+                    <h4 class="text-sm font-bold text-white">Convidados (10 lugares)</h4>
                 </div>
-                <div class="flex flex-col gap-2.5" id="sheet-guests-list">
-                    <!-- Gerado via JS -->
-                </div>
+                <div class="flex flex-col gap-2.5" id="sheet-guests-list"></div>
             </div>
-            
-            <!-- Padding extra pro final do scroll -->
-            <div class="h-10"></div>
+
+            <div class="h-6"></div>
         </div>
 
-        <!-- Footer do Sheet (Ações) -->
+        <!-- Footer Ações -->
         <div class="p-4 border-t border-gray-800 bg-[#1c1c20] flex-shrink-0 flex gap-3">
             <div id="view-actions" class="flex w-full gap-3">
-                <button onclick="showAuthModal()" class="flex-1 bg-gray-800 border border-gray-700 text-white py-3.5 rounded-xl text-sm font-bold active:bg-gray-700 flex justify-center items-center gap-2">
-                    <i class="ph ph-lock-key text-lg"></i> Habilitar Edição
+                <button onclick="showAuthModal()"
+                    class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3.5 rounded-xl text-sm font-bold active:bg-blue-800 flex justify-center items-center gap-2 transition-colors shadow-lg">
+                    <i class="ph ph-pencil-simple text-lg"></i> Editar
                 </button>
             </div>
             <div id="edit-actions" class="hidden w-full gap-3">
-                <button onclick="closeSheet()" class="w-1/3 bg-[#121214] border border-gray-700 text-gray-300 py-3.5 rounded-xl text-sm font-bold active:bg-gray-800">
+                <button onclick="closeSheet()"
+                    class="w-1/3 bg-[#121214] border border-gray-700 text-gray-300 hover:text-white py-3.5 rounded-xl text-sm font-bold active:bg-gray-800 transition-all">
                     Cancelar
                 </button>
-                <button id="save-btn" onclick="saveTableData()" class="w-2/3 bg-blue-600 text-white py-3.5 rounded-xl text-sm font-bold active:bg-blue-700 flex justify-center items-center gap-2 shadow-[0_4px_20px_rgba(37,99,235,0.3)]">
-                    <i class="ph ph-floppy-disk text-lg"></i> Salvar
+                <button id="save-btn" onclick="saveTableData()"
+                    class="w-2/3 bg-green-600 hover:bg-green-700 text-white py-3.5 rounded-xl text-sm font-bold active:bg-green-800 flex justify-center items-center gap-2 transition-all shadow-lg">
+                    <i class="ph ph-check-circle text-lg"></i> Salvar
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Toast / Notificação -->
-    <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 flex items-center w-[90%] max-w-sm p-4 space-x-3 text-white bg-green-600 rounded-2xl shadow-[0_10px_40px_rgba(34,197,94,0.4)] transform -translate-y-24 opacity-0 transition-all duration-300 z-[300]">
-        <i class="ph ph-check-circle text-2xl"></i>
-        <div class="text-sm font-bold">Salvo com sucesso!</div>
+    <!-- Toast -->
+    <div id="toast" class="toast fixed left-1/2 w-[90%] max-w-sm p-4 text-white bg-green-600 rounded-2xl shadow-2xl flex items-center gap-3">
+        <i class="ph ph-check-circle text-2xl flex-shrink-0"></i>
+        <div class="text-sm font-semibold">Salvo com sucesso!</div>
     </div>
 
+    <!-- Scripts -->
+    <script src="app.js" defer></script>
+
     <script>
-        // CONFIGURAÇÕES DO SISTEMA
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyZPP_uF5VpQWYZZDzC-mrxDhjBpGbpHO_Twt7_mnWK71-yqTA7_4N8JjH2oAX7iiLIjQ/exec";
-        const SENHA_SISTEMA = "baile2026"; 
+        // =========================================
+        // PWA INSTALL BANNER
+        // =========================================
+        let deferredPrompt = null;
 
-        // VARIÁVEIS GLOBAIS
-        const tablesData = {};
-        let currentEditingTableId = null;
-        let isEditor = false; 
+        // Android / Chrome: captura o evento antes de mostrar o prompt nativo
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
 
-        const STATUS_COLORS = {
-            'livre': 'bg-green-500', 'negociacao': 'bg-purple-500', 
-            'reservada': 'bg-orange-500', 'patrocinio': 'bg-cyan-500', 'bloqueada': 'bg-gray-500'
-        };
-
-        const STATUS_BORDERS = {
-            'livre': 'border-green-600', 'negociacao': 'border-purple-600', 
-            'reservada': 'border-orange-600', 'patrocinio': 'border-cyan-600', 'bloqueada': 'border-gray-600'
-        };
-
-        const STATUS_LABELS = {
-            'livre': 'Livre', 'negociacao': 'Negociação', 
-            'reservada': 'Reservada', 'patrocinio': 'Patrocínio', 'bloqueada': 'Bloqueada'
-        };
-
-        // --- INICIALIZAÇÃO ---
-        function initializeData() {
-            // Setor A
-            for(let i = 1; i <= 48; i++) {
-                let status = 'livre';
-                if (i <= 4) status = 'reservada'; 
-                if ([12, 24, 36, 48].includes(i)) status = 'patrocinio';
-                let r = Math.floor((i - 1) / 12); 
-                let c = (i - 1) % 12; 
-                let numMesa = r + 1 + (11 - c) * 4;
-                
-                tablesData[`A${i}`] = { 
-                    id: `A${i}`, sector: 'A', number: numMesa, status: status, identification: '', 
-                    paymentMethod: '', missingAmount: '', installmentsCount: '2', 
-                    installmentsValues: Array(5).fill(''), guests: Array(10).fill(''),
-                    seller: '', sellerOther: '', saleDate: ''
-                };
+            // Só mostra se o usuário não dispensou antes
+            if (!localStorage.getItem('install_dismissed')) {
+                setTimeout(() => {
+                    document.getElementById('install-banner').classList.add('show');
+                }, 2000); // aparece 2s após carregar
             }
-            // Setor B
-            for(let i = 1; i <= 48; i++) {
-                let status = 'livre';
-                if (i % 12 === 11 || i % 12 === 0) status = 'patrocinio';
-                let r = Math.floor((i - 1) / 12);
-                let c = (i - 1) % 12;
-                let numMesa = 48 + r + 1 + (11 - c) * 4;
+        });
 
-                tablesData[`B${i}`] = { 
-                    id: `B${i}`, sector: 'B', number: numMesa, status: status, identification: '', 
-                    paymentMethod: '', missingAmount: '', installmentsCount: '2', 
-                    installmentsValues: Array(5).fill(''), guests: Array(10).fill(''),
-                    seller: '', sellerOther: '', saleDate: ''
-                };
-            }
-        }
-
-        async function loadDataFromSheets() {
-            try {
-                const response = await fetch(WEB_APP_URL);
-                const result = await response.json();
-                
-                if (result.status === "success" && result.data) {
-                    for (const [id, tableInfo] of Object.entries(result.data)) {
-                        if (tablesData[id]) {
-                            Object.assign(tablesData[id], tableInfo);
-                            if(!tablesData[id].installmentsValues) tablesData[id].installmentsValues = Array(5).fill('');
-                        }
-                    }
+        // Clicou em "Instalar" - abre o prompt nativo do Android
+        function installApp() {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((result) => {
+                if (result.outcome === 'accepted') {
+                    document.getElementById('install-banner').classList.remove('show');
                 }
-            } catch (error) {
-                console.error("Erro API:", error);
-            } finally {
-                renderAll();
-                const loader = document.getElementById('loading-overlay');
-                loader.classList.add('opacity-0', 'pointer-events-none');
-                setTimeout(() => loader.remove(), 500);
-            }
-        }
-
-        // --- RENDERIZAÇÃO ---
-        function renderAll() {
-            renderMap();
-            renderList();
-        }
-
-        function renderMap() {
-            const sectorA = document.getElementById('sector-a');
-            const sectorB = document.getElementById('sector-b');
-            sectorA.innerHTML = ''; sectorB.innerHTML = '';
-
-            Object.values(tablesData).forEach(table => {
-                const idDisplay = table.identification 
-                    ? `<span class="text-[8px] font-medium leading-tight mt-1 max-w-[40px] truncate text-center text-white/90">${table.identification}</span>` 
-                    : '';
-
-                const pinHTML = `
-                    <div onclick="openSheet('${table.id}')" 
-                         class="table-pin flex flex-col items-center justify-center w-11 h-11 rounded-full border-2 ${STATUS_BORDERS[table.status]} ${STATUS_COLORS[table.status]} shadow-lg relative group">
-                        <span class="text-[13px] font-extrabold text-white leading-none">${table.number}</span>
-                        ${idDisplay}
-                    </div>
-                `;
-                if(table.sector === 'A') sectorA.innerHTML += pinHTML;
-                else sectorB.innerHTML += pinHTML;
+                deferredPrompt = null;
             });
         }
 
-        function renderList(filterText = '') {
-            const container = document.getElementById('list-container');
-            container.innerHTML = '';
-            
-            const lowerFilter = filterText.toLowerCase();
-            
-            // Ordenar por número
-            const sortedTables = Object.values(tablesData).sort((a,b) => a.number - b.number);
+        // Dispensou o banner Android
+        function dismissInstallBanner() {
+            document.getElementById('install-banner').classList.remove('show');
+            localStorage.setItem('install_dismissed', 'true');
+        }
 
-            sortedTables.forEach(table => {
-                if (filterText) {
-                    const matchId = table.number.toString().includes(lowerFilter);
-                    const matchName = table.identification.toLowerCase().includes(lowerFilter);
-                    if (!matchId && !matchName) return;
-                }
+        // Dispensou o banner iOS
+        function dismissIosBanner() {
+            document.getElementById('ios-banner').classList.remove('show');
+            localStorage.setItem('ios_dismissed', 'true');
+        }
 
-                const card = document.createElement('div');
-                card.onclick = () => openSheet(table.id);
-                card.className = "bg-[#1c1c20] border border-gray-800 p-4 rounded-2xl flex items-center justify-between active:scale-[0.98] transition-transform";
-                
-                card.innerHTML = `
-                    <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 rounded-full ${STATUS_COLORS[table.status]} border-2 ${STATUS_BORDERS[table.status]} flex items-center justify-center flex-shrink-0 shadow-md">
-                            <span class="text-white font-extrabold text-lg">${table.number}</span>
-                        </div>
-                        <div class="flex flex-col">
-                            <span class="text-sm font-bold text-white">${table.identification || 'Sem responsável'}</span>
-                            <span class="text-[11px] text-gray-400 mt-0.5 flex items-center gap-1">
-                                <div class="w-2 h-2 rounded-full ${STATUS_COLORS[table.status]}"></div>
-                                ${STATUS_LABELS[table.status]}
-                            </span>
-                        </div>
-                    </div>
-                    <i class="ph ph-caret-right text-gray-600"></i>
-                `;
-                container.appendChild(card);
-            });
-            
-            if(container.innerHTML === '') {
-                container.innerHTML = `<div class="col-span-full text-center text-gray-500 py-10 text-sm">Nenhuma mesa encontrada.</div>`;
+        // iOS: beforeinstallprompt não existe, mostra instruções manuais
+        (function checkIos() {
+            const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+            const isStandalone = window.navigator.standalone === true;
+            const dismissed = localStorage.getItem('ios_dismissed');
+
+            if (isIos && !isStandalone && !dismissed) {
+                setTimeout(() => {
+                    document.getElementById('ios-banner').classList.add('show');
+                }, 2000);
             }
+        })();
+
+        // Quando app for instalado com sucesso
+        window.addEventListener('appinstalled', () => {
+            document.getElementById('install-banner').classList.remove('show');
+            deferredPrompt = null;
+        });
+
+        // =========================================
+        // SERVICE WORKER
+        // =========================================
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js')
+                .then(() => console.log('✓ Service Worker registrado'))
+                .catch(err => console.warn('Service Worker:', err));
         }
-
-        function filterList() {
-            const val = document.getElementById('search-input').value;
-            renderList(val);
-        }
-
-        // --- NAVEGAÇÃO DE ABAS ---
-        function switchTab(tabName) {
-            const tabList = document.getElementById('tab-list');
-            const tabMap = document.getElementById('tab-map');
-            const navList = document.getElementById('nav-list');
-            const navMap = document.getElementById('nav-map');
-
-            if (tabName === 'list') {
-                tabList.classList.remove('hidden');
-                tabMap.classList.add('hidden');
-                
-                navList.innerHTML = `<i class="ph-fill ph-list-dashes text-2xl mb-1"></i><span class="text-[10px] font-medium">Lista</span>`;
-                navList.className = "flex-1 flex flex-col items-center justify-center text-blue-500 transition-colors py-1";
-                
-                navMap.innerHTML = `<i class="ph ph-map-trifold text-2xl mb-1"></i><span class="text-[10px] font-medium">Planta</span>`;
-                navMap.className = "flex-1 flex flex-col items-center justify-center text-gray-500 hover:text-gray-300 transition-colors py-1";
-            } else {
-                tabMap.classList.remove('hidden');
-                tabList.classList.add('hidden');
-                
-                navMap.innerHTML = `<i class="ph-fill ph-map-trifold text-2xl mb-1"></i><span class="text-[10px] font-medium">Planta</span>`;
-                navMap.className = "flex-1 flex flex-col items-center justify-center text-blue-500 transition-colors py-1";
-                
-                navList.innerHTML = `<i class="ph ph-list-dashes text-2xl mb-1"></i><span class="text-[10px] font-medium">Lista</span>`;
-                navList.className = "flex-1 flex flex-col items-center justify-center text-gray-500 hover:text-gray-300 transition-colors py-1";
-            }
-        }
-
-        // --- BOTTOM SHEET (Gaveta) ---
-        function openSheet(tableId) {
-            currentEditingTableId = tableId;
-            const table = tablesData[tableId];
-            
-            document.getElementById('sheet-title').innerText = `Mesa ${table.number}`;
-            document.getElementById('sheet-status-indicator').className = `w-3.5 h-3.5 rounded-full shadow-md ${STATUS_COLORS[table.status]}`;
-            
-            // Alternar modos Visão/Edição
-            const editBadge = document.getElementById('edit-badge');
-            const finSection = document.getElementById('financial-section');
-            const viewActions = document.getElementById('view-actions');
-            const editActions = document.getElementById('edit-actions');
-
-            if(isEditor) {
-                editBadge.classList.remove('hidden');
-                finSection.classList.remove('hidden');
-                finSection.classList.add('flex');
-                viewActions.classList.add('hidden');
-                editActions.classList.remove('hidden');
-                editActions.classList.add('flex');
-            } else {
-                editBadge.classList.add('hidden');
-                finSection.classList.add('hidden');
-                finSection.classList.remove('flex');
-                editActions.classList.add('hidden');
-                editActions.classList.remove('flex');
-                viewActions.classList.remove('hidden');
-            }
-
-            // Preencher Selects
-            document.getElementById('sheet-status').value = table.status;
-            document.getElementById('sheet-status').disabled = !isEditor;
-
-            // Financeiro
-            document.getElementById('sheet-payment-method').value = table.paymentMethod || '';
-            document.getElementById('sheet-payment-method').disabled = !isEditor;
-            document.getElementById('sheet-installments-count').value = table.installmentsCount || '2';
-            document.getElementById('sheet-installments-count').disabled = !isEditor;
-            document.getElementById('sheet-seller').value = table.seller || '';
-            document.getElementById('sheet-seller').disabled = !isEditor;
-            
-            document.getElementById('sheet-seller-other').value = table.sellerOther || '';
-            document.getElementById('sheet-sale-date').value = table.saleDate || '';
-            document.getElementById('sheet-identification').value = table.identification || '';
-            document.getElementById('sheet-missing-amount').value = table.missingAmount || '';
-
-            toggleSellerOther();
-            togglePaymentFields();
-
-            // Configurar Readonly baseado no status de editor
-            const textInputs = ['sheet-identification', 'sheet-missing-amount', 'sheet-seller-other', 'sheet-sale-date'];
-            textInputs.forEach(id => {
-                const el = document.getElementById(id);
-                if(!isEditor) {
-                    el.setAttribute('readonly', 'true');
-                    el.classList.add('bg-transparent', 'border-transparent', 'px-0');
-                    el.classList.remove('bg-[#121214]', 'border-gray-700', 'bg-red-500/10', 'border-red-500/30');
-                } else {
-                    el.removeAttribute('readonly');
-                    el.classList.remove('bg-transparent', 'border-transparent', 'px-0');
-                    if(id==='sheet-missing-amount') el.classList.add('bg-red-500/10', 'border-red-500/30');
-                    else el.classList.add('bg-[#121214]', 'border-gray-700');
-                }
-            });
-
-            // Convidados
-            const guestsList = document.getElementById('sheet-guests-list');
-            guestsList.innerHTML = '';
-            for(let i=0; i<10; i++) {
-                const isRO = !isEditor ? 'readonly' : '';
-                const bgClass = !isEditor ? 'bg-transparent border-transparent px-0 text-gray-400' : 'bg-[#121214] border border-gray-700 text-white pl-10 pr-4 py-3';
-                const pText = !isEditor ? '—' : 'Nome do convidado...';
-                
-                guestsList.innerHTML += `
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none ${!isEditor ? 'hidden' : ''}">
-                            <span class="text-gray-500 text-[10px] font-bold">${i+1}</span>
-                        </div>
-                        <input type="text" id="guest-${i}" value="${table.guests[i] || ''}" placeholder="${pText}" class="w-full text-sm rounded-xl outline-none focus:ring-2 focus:ring-blue-500 ${bgClass}" ${isRO}>
-                    </div>
-                `;
-            }
-
-            // Animar abertura
-            document.getElementById('sheet-overlay').classList.add('open');
-            document.getElementById('bottom-sheet').classList.add('open');
-        }
-
-        function closeSheet() {
-            document.getElementById('sheet-overlay').classList.remove('open');
-            document.getElementById('bottom-sheet').classList.remove('open');
-            setTimeout(() => { currentEditingTableId = null; }, 300); // aguarda animação
-        }
-
-        // --- FUNÇÕES DE APOIO AO SHEET ---
-        function toggleSellerOther() {
-            const v = document.getElementById('sheet-seller').value;
-            const el = document.getElementById('sheet-seller-other');
-            if(v === 'Outros') el.classList.remove('hidden');
-            else el.classList.add('hidden');
-        }
-
-        function togglePaymentFields() {
-            const method = document.getElementById('sheet-payment-method').value;
-            const wrap = document.getElementById('installments-wrapper');
-            if(method === 'parcelado') {
-                wrap.classList.remove('hidden');
-                wrap.classList.add('flex');
-                renderInstallmentFields();
-            } else {
-                wrap.classList.add('hidden');
-                wrap.classList.remove('flex');
-            }
-        }
-
-        function renderInstallmentFields() {
-            const count = parseInt(document.getElementById('sheet-installments-count').value) || 2;
-            const container = document.getElementById('installments-inputs-container');
-            container.innerHTML = '';
-            const table = tablesData[currentEditingTableId];
-            
-            for(let i=0; i<count; i++) {
-                const val = table.installmentsValues[i] || '';
-                const isRO = !isEditor ? 'readonly' : '';
-                const bgClass = !isEditor ? 'bg-transparent border-transparent px-0 text-gray-400' : 'bg-[#121214] border border-gray-700 focus:ring-2 focus:ring-blue-500';
-                
-                container.innerHTML += `
-                    <div class="flex flex-col gap-1">
-                        <label class="text-[10px] text-gray-500">Parc. ${i+1} (R$)</label>
-                        <input type="text" id="inst-val-${i}" value="${val}" placeholder="0,00" class="w-full text-sm text-white rounded-xl outline-none p-3 ${bgClass}" ${isRO}>
-                    </div>
-                `;
-            }
-        }
-
-        // --- AUTH ---
-        function showAuthModal() {
-            if(isEditor) return; // já é admin
-            document.getElementById('auth-modal').classList.remove('opacity-0', 'pointer-events-none');
-            document.getElementById('auth-content').classList.remove('scale-95');
-            document.getElementById('auth-password').value = '';
-            setTimeout(() => document.getElementById('auth-password').focus(), 100);
-        }
-
-        function closeAuthModal() {
-            document.getElementById('auth-modal').classList.add('opacity-0', 'pointer-events-none');
-            document.getElementById('auth-content').classList.add('scale-95');
-        }
-
-        function authenticate() {
-            const pass = document.getElementById('auth-password').value;
-            const err = document.getElementById('auth-error');
-            
-            if(pass === SENHA_SISTEMA) {
-                isEditor = true;
-                closeAuthModal();
-                document.getElementById('btn-unlock').classList.add('hidden');
-                document.getElementById('badge-unlocked').classList.remove('hidden');
-                document.getElementById('badge-unlocked').classList.add('flex');
-                
-                if(currentEditingTableId) openSheet(currentEditingTableId); // recarrega sheet
-            } else {
-                err.classList.remove('hidden');
-                setTimeout(() => err.classList.add('hidden'), 3000);
-            }
-        }
-
-        // --- SALVAR ---
-        async function saveTableData() {
-            if(!currentEditingTableId || !isEditor) return;
-            const table = tablesData[currentEditingTableId];
-            
-            table.status = document.getElementById('sheet-status').value;
-            table.identification = document.getElementById('sheet-identification').value.trim();
-            table.seller = document.getElementById('sheet-seller').value;
-            table.sellerOther = document.getElementById('sheet-seller-other').value.trim();
-            table.saleDate = document.getElementById('sheet-sale-date').value;
-            table.paymentMethod = document.getElementById('sheet-payment-method').value;
-            table.missingAmount = document.getElementById('sheet-missing-amount').value.trim();
-            table.installmentsCount = document.getElementById('sheet-installments-count').value;
-            
-            for(let i=0; i<10; i++) table.guests[i] = document.getElementById(`guest-${i}`).value.trim();
-            
-            table.installmentsValues = Array(5).fill('');
-            if(table.paymentMethod === 'parcelado') {
-                for(let i=0; i<parseInt(table.installmentsCount); i++) {
-                    const inp = document.getElementById(`inst-val-${i}`);
-                    if(inp) table.installmentsValues[i] = inp.value.trim();
-                }
-            }
-
-            const btn = document.getElementById('save-btn');
-            const oldHTML = btn.innerHTML;
-            btn.innerHTML = '<i class="ph ph-circle-notch animate-spin text-lg"></i> Salvando...';
-            btn.disabled = true;
-
-            try {
-                await fetch(WEB_APP_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({
-                        id: table.id, number: table.number, status: table.status,
-                        identification: table.identification, seller: table.seller,
-                        sellerOther: table.sellerOther, saleDate: table.saleDate,
-                        paymentMethod: table.paymentMethod, missingAmount: table.missingAmount,
-                        installmentsCount: table.installmentsCount, installmentsValues: table.installmentsValues,
-                        guests: table.guests
-                    })
-                });
-                renderAll();
-                closeSheet();
-                showToast();
-            } catch(e) {
-                alert("Erro ao salvar. Verifique sua conexão.");
-            } finally {
-                btn.innerHTML = oldHTML;
-                btn.disabled = false;
-            }
-        }
-
-        function showToast() {
-            const t = document.getElementById('toast');
-            t.classList.remove('-translate-y-24', 'opacity-0');
-            t.classList.add('translate-y-4'); // Desce um pouco do topo
-            setTimeout(() => { 
-                t.classList.add('-translate-y-24', 'opacity-0'); 
-                t.classList.remove('translate-y-4');
-            }, 3000);
-        }
-
-        // Boot
-        initializeData();
-        loadDataFromSheets();
-        
-        // Bloquear scroll do body quando sheet estiver aberto (mobile fix)
-        document.getElementById('sheet-overlay').addEventListener('touchmove', e => e.preventDefault(), {passive: false});
-
     </script>
 </body>
 </html>
