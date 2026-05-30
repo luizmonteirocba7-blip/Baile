@@ -5,16 +5,47 @@ const CONFIG = {
     webAppUrl: 'https://script.google.com/macros/s/AKfycbyZPP_uF5VpQWYZZDzC-mrxDhjBpGbpHO_Twt7_mnWK71-yqTA7_4N8JjH2oAX7iiLIjQ/exec',
     password: 'baile2026',
     syncInterval: 5 * 60 * 1000,
-    version: '2.0.0'
+    version: '3.0.0'
 };
 
 const STATUS_CONFIG = {
-    livre: { color: 'bg-green-500', border: 'border-green-600', label: 'Livre' },
-    negociacao: { color: 'bg-purple-500', border: 'border-purple-600', label: 'Negociação' },
-    reservada: { color: 'bg-orange-500', border: 'border-orange-600', label: 'Reservada' },
-    patrocinio: { color: 'bg-cyan-500', border: 'border-cyan-600', label: 'Patrocínio' },
-    bloqueada: { color: 'bg-gray-500', border: 'border-gray-600', label: 'Bloqueada' }
+    livre:      { bg: 'rgba(34,197,94,0.80)',   border: '#4ade80', glow: '0 0 12px rgba(34,197,94,0.5)',    glowStrong: '0 0 22px rgba(34,197,94,0.8)',    wave: 'rgba(34,197,94,0.6)',   indicator: '#22c55e', label: 'Livre' },
+    negociacao: { bg: 'rgba(168,85,247,0.80)',  border: '#c084fc', glow: '0 0 12px rgba(168,85,247,0.5)',   glowStrong: '0 0 22px rgba(168,85,247,0.8)',   wave: 'rgba(168,85,247,0.6)',  indicator: '#a855f7', label: 'Negociação' },
+    reservada:  { bg: 'rgba(249,115,22,0.80)',  border: '#fb923c', glow: '0 0 12px rgba(249,115,22,0.5)',   glowStrong: '0 0 22px rgba(249,115,22,0.8)',   wave: 'rgba(249,115,22,0.6)',  indicator: '#f97316', label: 'Reservada' },
+    patrocinio: { bg: 'rgba(6,182,212,0.80)',   border: '#22d3ee', glow: '0 0 12px rgba(6,182,212,0.5)',    glowStrong: '0 0 22px rgba(6,182,212,0.8)',    wave: 'rgba(6,182,212,0.6)',   indicator: '#06b6d4', label: 'Patrocínio' },
+    bloqueada:  { bg: 'rgba(107,114,128,0.75)', border: '#9ca3af', glow: '0 0 8px rgba(107,114,128,0.3)',   glowStrong: '0 0 14px rgba(107,114,128,0.5)',  wave: 'rgba(107,114,128,0.4)', indicator: '#6b7280', label: 'Bloqueada' }
 };
+
+// ============================================
+// LAYOUT DO MAPA — Matriz de posições
+// ============================================
+const GRID_TOP    = 0.241;
+const GRID_LEFT   = 0.250;
+const GRID_WIDTH  = 0.480;
+const GRID_HEIGHT = 0.485;
+const GRID_COLS   = 12;
+const GRID_ROWS   = 8;
+const PIN_SIZE    = 38;
+
+const LAYOUT_MATRIX = [
+    [78, 75, 69, 63, 57, 49, 41, 33, 25, 17,  9,  1],
+    [79, 76, 70, 64, 58, 50, 42, 34, 26, 18, 10,  2],
+    [80, 77, 71, 65, 59, 51, 43, 35, 27, 19, 11,  3],
+    [ 0,  0, 72, 66, 60, 52, 44, 36, 28, 20, 12,  4],
+    [ 0,  0, 73, 67, 61, 53, 45, 37, 29, 21, 13,  5],
+    [ 0,  0, 74, 68, 62, 54, 46, 38, 30, 22, 14,  6],
+    [ 0,  0,  0,  0,  0, 55, 47, 39, 31, 23, 15,  7],
+    [ 0,  0,  0,  0,  0, 56, 48, 40, 32, 24, 16,  8],
+];
+
+function cellToPercent(row, col) {
+    const cellW = GRID_WIDTH  / GRID_COLS;
+    const cellH = GRID_HEIGHT / GRID_ROWS;
+    return {
+        top:  (GRID_TOP  + cellH * row + cellH / 2) * 100,
+        left: (GRID_LEFT + cellW * col + cellW / 2) * 100,
+    };
+}
 
 // ============================================
 // ESTADO GLOBAL
@@ -23,15 +54,12 @@ const State = {
     tables: {},
     currentTableId: null,
     isEditor: false,
-    lastSync: null,
     isSyncing: false,
-    searchFilter: '',
 
     init() {
         this.tables = {};
         this.currentTableId = null;
         this.isEditor = localStorage.getItem('baile_editor') === 'true';
-        this.lastSync = localStorage.getItem('baile_sync') || null;
     }
 };
 
@@ -42,24 +70,19 @@ const API = {
     async fetch(endpoint = '', data = null) {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000);
-
         try {
             const options = {
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 signal: controller.signal
             };
-
             if (data) {
                 options.method = 'POST';
                 options.body = JSON.stringify(data);
             }
-
             const response = await fetch(CONFIG.webAppUrl + endpoint, options);
             clearTimeout(timeoutId);
-
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             return await response.json();
-
         } catch (error) {
             clearTimeout(timeoutId);
             console.error('Erro na API:', error);
@@ -70,9 +93,7 @@ const API = {
 
     async loadData() {
         const result = await this.fetch();
-        if (result?.status === 'success' && result.data) {
-            return result.data;
-        }
+        if (result?.status === 'success' && result.data) return result.data;
         return {};
     },
 
@@ -86,43 +107,27 @@ const API = {
 // ============================================
 const Initialize = {
     createTables() {
-        for (let i = 1; i <= 48; i++) {
-            let status = 'livre';
-            if (i <= 4) status = 'reservada';
-            if ([12, 24, 36, 48].includes(i)) status = 'patrocinio';
-
-            const row = Math.floor((i - 1) / 12);
-            const col = (i - 1) % 12;
-            const tableNum = row + 1 + (11 - col) * 4;
-
-            State.tables[`A${i}`] = this.createTableObject(`A${i}`, 'A', tableNum, status);
+        for (let i = 1; i <= 80; i++) {
+            State.tables[`T${i}`] = {
+                id: `T${i}`,
+                number: String(i).padStart(2, '0'),
+                status: 'livre',
+                identification: '',
+                paymentMethod: '',
+                missingAmount: '',
+                installmentsCount: '2',
+                installmentsValues: Array(6).fill(''),
+                guests: Array(10).fill(''),
+                seller: '',
+                sellerOther: '',
+                saleDate: ''
+            };
         }
-
-        for (let i = 1; i <= 48; i++) {
-            let status = 'livre';
-            if (i % 12 === 11 || i % 12 === 0) status = 'patrocinio';
-
-            const row = Math.floor((i - 1) / 12);
-            const col = (i - 1) % 12;
-            const tableNum = 48 + row + 1 + (11 - col) * 4;
-
-            State.tables[`B${i}`] = this.createTableObject(`B${i}`, 'B', tableNum, status);
-        }
-    },
-
-    createTableObject(id, sector, number, status) {
-        return {
-            id, sector, number, status,
-            identification: '', paymentMethod: '', missingAmount: '',
-            installmentsCount: '2', installmentsValues: Array(6).fill(''),
-            guests: Array(10).fill(''), seller: '', sellerOther: '', saleDate: ''
-        };
     },
 
     async mergeWithServerData() {
         const serverData = await API.loadData();
         if (!serverData) return;
-
         Object.entries(serverData).forEach(([id, data]) => {
             if (State.tables[id]) {
                 Object.assign(State.tables[id], data);
@@ -138,50 +143,69 @@ const Initialize = {
 // ============================================
 const Render = {
     all() {
-        this.map();
+        this.pins();
         this.list();
+        this.stats();
     },
 
-    map() {
-        const sectorA = document.getElementById('sector-a');
-        const sectorB = document.getElementById('sector-b');
-        if (!sectorA || !sectorB) return;
+    // Renderiza os pins animados no mapa
+    pins() {
+        const layer = document.getElementById('pins-layer');
+        if (!layer) return;
 
-        const htmlA = [];
-        const htmlB = [];
+        let html = '';
+        LAYOUT_MATRIX.forEach((row, ri) => {
+            row.forEach((num, ci) => {
+                if (num === 0) return;
+                const table = State.tables[`T${num}`];
+                if (!table) return;
 
-        Object.values(State.tables).forEach(table => {
-            if (table.sector === 'A') htmlA.push(this.createTablePin(table));
-            else htmlB.push(this.createTablePin(table));
+                const cfg = STATUS_CONFIG[table.status] || STATUS_CONFIG['livre'];
+                const { top, left } = cellToPercent(ri, ci);
+                const waveDelay = ((num * 137) % 2400) / 1000;
+
+                const idHtml = table.identification
+                    ? `<span class="pin-id">${table.identification}</span>` : '';
+
+                html += `
+                <div class="table-pin" onclick="openSheet('T${num}')"
+                    style="top:${top}%; left:${left}%;
+                           width:${PIN_SIZE}px; height:${PIN_SIZE}px;
+                           background:${cfg.bg}; border-color:${cfg.border};
+                           --pin-glow:${cfg.glow}; --pin-glow-strong:${cfg.glowStrong};
+                           animation-delay:${waveDelay}s; backdrop-filter:blur(2px);">
+                    <span class="wave wave-1" style="border-color:${cfg.wave}; animation-delay:${waveDelay}s"></span>
+                    <span class="wave wave-2" style="border-color:${cfg.wave}; animation-delay:${waveDelay + 0.6}s"></span>
+                    <span class="wave wave-3" style="border-color:${cfg.wave}; animation-delay:${waveDelay + 1.2}s"></span>
+                    <span class="pin-num">${table.number}</span>
+                    ${idHtml}
+                </div>`;
+            });
         });
-
-        sectorA.innerHTML = htmlA.join('');
-        sectorB.innerHTML = htmlB.join('');
+        layer.innerHTML = html;
     },
 
-    createTablePin(table) {
-        let statusKey = table.status ? table.status.toLowerCase() : 'livre';
-        const config = STATUS_CONFIG[statusKey] || STATUS_CONFIG['livre'];
-
-        const label = table.identification
-            ? `<span class="text-[8px] font-medium leading-tight mt-0.5 max-w-[40px] truncate text-center text-white/90">${table.identification}</span>`
-            : '';
-
-        return `
-            <div onclick="openSheet('${table.id}')"
-                 class="table-pin flex flex-col items-center justify-center w-11 h-11 rounded-full border-2 ${config.border} ${config.color} shadow-lg hover:shadow-xl">
-                <span class="text-[13px] font-extrabold text-white leading-none">${table.number}</span>
-                ${label}
-            </div>
-        `;
+    // Atualiza os contadores do header
+    stats() {
+        const counts = { livre: 0, negociacao: 0, reservada: 0, patrocinio: 0, bloqueada: 0 };
+        Object.values(State.tables).forEach(t => {
+            if (counts[t.status] !== undefined) counts[t.status]++;
+        });
+        const el = id => document.getElementById(id);
+        el('cnt-livre')      && (el('cnt-livre').textContent      = counts.livre);
+        el('cnt-negociacao') && (el('cnt-negociacao').textContent = counts.negociacao);
+        el('cnt-reservada')  && (el('cnt-reservada').textContent  = counts.reservada);
+        el('cnt-patrocinio') && (el('cnt-patrocinio').textContent = counts.patrocinio);
+        el('cnt-bloqueada')  && (el('cnt-bloqueada').textContent  = counts.bloqueada);
     },
 
+    // Renderiza a lista de mesas
     list(searchText = '') {
         const container = document.getElementById('list-container');
         if (!container) return;
 
         const lowerSearch = searchText.toLowerCase();
-        const sorted = Object.values(State.tables).sort((a, b) => a.number - b.number);
+        const sorted = Object.values(State.tables).sort((a, b) => parseInt(a.number) - parseInt(b.number));
 
         const filtered = sorted.filter(table => {
             if (!searchText) return true;
@@ -198,21 +222,21 @@ const Render = {
     },
 
     createListCard(table) {
-        let statusKey = table.status ? table.status.toLowerCase() : 'livre';
-        const config = STATUS_CONFIG[statusKey] || STATUS_CONFIG['livre'];
+        const cfg = STATUS_CONFIG[table.status] || STATUS_CONFIG['livre'];
         const name = table.identification || 'Sem responsável';
 
         return `
-            <div onclick="openSheet('${table.id}')" class="bg-[#1c1c20] border border-gray-800 p-4 rounded-2xl flex items-center justify-between hover:border-gray-700 active:scale-[0.98] transition-all duration-200 cursor-pointer">
+            <div onclick="openSheet('${table.id}')" class="bg-white/[0.04] border border-white/[0.08] p-4 rounded-2xl flex items-center justify-between hover:border-white/20 active:scale-[0.98] transition-all duration-200 cursor-pointer">
                 <div class="flex items-center gap-3">
-                    <div class="w-12 h-12 rounded-full ${config.color} border-2 ${config.border} flex items-center justify-center flex-shrink-0 shadow-md">
-                        <span class="text-white font-extrabold text-lg">${table.number}</span>
+                    <div class="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 shadow-md border-2"
+                         style="background:${cfg.bg}; border-color:${cfg.border}; box-shadow:${cfg.glow}">
+                        <span class="text-white font-extrabold text-base">${table.number}</span>
                     </div>
                     <div class="flex flex-col min-w-0">
                         <span class="text-sm font-bold text-white truncate">${name}</span>
-                        <span class="text-[11px] text-gray-400 mt-0.5 flex items-center gap-1">
-                            <div class="w-2 h-2 rounded-full ${config.color}"></div>
-                            ${config.label}
+                        <span class="text-[11px] text-gray-400 mt-0.5 flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full inline-block" style="background:${cfg.indicator}; box-shadow:0 0 5px ${cfg.indicator}"></span>
+                            ${cfg.label}
                         </span>
                     </div>
                 </div>
@@ -223,17 +247,20 @@ const Render = {
 };
 
 // ============================================
-// MÓDULO DE AUTENTICAÇÃO E BOTTOM SHEET
+// MÓDULO DE AUTENTICAÇÃO
 // ============================================
 const Auth = {
     showModal() {
         if (State.isEditor) return;
         const modal = document.getElementById('auth-modal');
         modal.classList.add('active');
-        modal.querySelector('#auth-password').focus();
+        document.getElementById('auth-password').value = '';
+        document.getElementById('auth-password').focus();
         document.getElementById('auth-error').classList.add('hidden');
     },
-    closeModal() { document.getElementById('auth-modal').classList.remove('active'); },
+    closeModal() {
+        document.getElementById('auth-modal').classList.remove('active');
+    },
     authenticate(password) {
         const error = document.getElementById('auth-error');
         error.classList.add('hidden');
@@ -250,7 +277,7 @@ const Auth = {
         return true;
     },
     updateUI() {
-        const btnUnlock = document.getElementById('btn-unlock');
+        const btnUnlock    = document.getElementById('btn-unlock');
         const badgeUnlocked = document.getElementById('badge-unlocked');
         if (!btnUnlock || !badgeUnlocked) return;
         if (State.isEditor) {
@@ -265,6 +292,9 @@ const Auth = {
     }
 };
 
+// ============================================
+// BOTTOM SHEET
+// ============================================
 const Sheet = {
     open(tableId) {
         State.currentTableId = tableId;
@@ -282,62 +312,61 @@ const Sheet = {
         setTimeout(() => { State.currentTableId = null; }, 300);
     },
     updateHeader(table) {
-        let statusKey = table.status ? table.status.toLowerCase() : 'livre';
-        const config = STATUS_CONFIG[statusKey] || STATUS_CONFIG['livre'];
+        const cfg = STATUS_CONFIG[table.status] || STATUS_CONFIG['livre'];
         document.getElementById('sheet-title').textContent = `Mesa ${table.number}`;
-        document.getElementById('sheet-status-indicator').className = `w-4 h-4 rounded-full shadow-[0_0_12px_rgba(34,197,94,0.5)] ${config.color}`;
+        const indicator = document.getElementById('sheet-status-indicator');
+        indicator.style.background  = cfg.indicator;
+        indicator.style.boxShadow   = cfg.glow;
     },
     fillForm(table) {
-        let statusKey = table.status ? table.status.toLowerCase() : 'livre';
+        let statusKey = table.status || 'livre';
         if (!STATUS_CONFIG[statusKey]) statusKey = 'livre';
 
-        document.getElementById('sheet-status').value = statusKey;
-        document.getElementById('sheet-identification').value = table.identification || '';
-        document.getElementById('sheet-seller').value = table.seller || '';
-        document.getElementById('sheet-seller-other').value = table.sellerOther || '';
-        document.getElementById('sheet-sale-date').value = table.saleDate || '';
-        document.getElementById('sheet-payment-method').value = table.paymentMethod || '';
-        document.getElementById('sheet-missing-amount').value = table.missingAmount || '';
+        document.getElementById('sheet-status').value           = statusKey;
+        document.getElementById('sheet-identification').value   = table.identification || '';
+        document.getElementById('sheet-seller').value           = table.seller || '';
+        document.getElementById('sheet-seller-other').value     = table.sellerOther || '';
+        document.getElementById('sheet-sale-date').value        = table.saleDate || '';
+        document.getElementById('sheet-payment-method').value   = table.paymentMethod || '';
+        document.getElementById('sheet-missing-amount').value   = table.missingAmount || '';
         document.getElementById('sheet-installments-count').value = table.installmentsCount || '2';
 
         const guestsList = document.getElementById('sheet-guests-list');
         guestsList.innerHTML = '';
-
         for (let i = 0; i < 10; i++) {
-            const guestValue = table.guests[i] || '';
-            const isReadOnly = !State.isEditor;
-            const bgClass = isReadOnly ? 'bg-transparent border-transparent px-0 text-gray-400' : 'bg-[#121214] border border-gray-700 text-white pl-10 pr-4 py-3';
-
+            const val = table.guests[i] || '';
+            const readOnly = !State.isEditor;
             guestsList.innerHTML += `
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none ${isReadOnly ? 'hidden' : ''}">
-                        <span class="text-gray-500 text-[10px] font-bold">${i + 1}</span>
-                    </div>
-                    <input type="text" id="guest-${i}" value="${guestValue}" placeholder="${isReadOnly ? '—' : 'Nome do convidado...'}" class="w-full text-sm rounded-xl outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${bgClass}" maxlength="40" ${isReadOnly ? 'readonly' : ''}>
-                </div>
-            `;
+                <div class="relative flex items-center gap-2">
+                    <span class="text-[10px] font-bold text-gray-600 w-4 text-right flex-shrink-0">${i + 1}</span>
+                    <input type="text" id="guest-${i}" value="${val}"
+                        placeholder="${readOnly ? '— Vazio —' : 'Nome do convidado...'}"
+                        class="field-input flex-1"
+                        maxlength="40" ${readOnly ? 'readonly' : ''}>
+                </div>`;
         }
+
         this.setFieldsDisabled(!State.isEditor);
         this.toggleSellerOther();
         this.togglePaymentFields();
     },
     setFieldsDisabled(disabled) {
-        ['sheet-status', 'sheet-identification', 'sheet-seller', 'sheet-sale-date', 'sheet-payment-method', 'sheet-missing-amount', 'sheet-installments-count'].forEach(id => {
-            const el = document.getElementById(id); if (el) el.disabled = disabled;
+        ['sheet-status', 'sheet-seller', 'sheet-payment-method', 'sheet-installments-count'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.disabled = disabled;
         });
         ['sheet-identification', 'sheet-seller-other', 'sheet-missing-amount', 'sheet-sale-date'].forEach(id => {
             const el = document.getElementById(id);
-            if (el) {
-                if (disabled) { el.setAttribute('readonly', 'true'); el.classList.add('bg-transparent', 'border-transparent', 'px-0'); }
-                else { el.removeAttribute('readonly'); el.classList.remove('bg-transparent', 'border-transparent', 'px-0'); }
-            }
+            if (!el) return;
+            if (disabled) el.setAttribute('readonly', 'true');
+            else el.removeAttribute('readonly');
         });
     },
     updateUI() {
-        const editBadge = document.getElementById('edit-badge');
+        const editBadge       = document.getElementById('edit-badge');
         const financialSection = document.getElementById('financial-section');
-        const viewActions = document.getElementById('view-actions');
-        const editActions = document.getElementById('edit-actions');
+        const viewActions     = document.getElementById('view-actions');
+        const editActions     = document.getElementById('edit-actions');
         if (!editBadge) return;
 
         if (State.isEditor) {
@@ -368,33 +397,38 @@ const Sheet = {
     },
     renderInstallmentFields() {
         const table = State.tables[State.currentTableId];
+        if (!table) return;
         const count = parseInt(document.getElementById('sheet-installments-count').value) || 2;
         const container = document.getElementById('installments-inputs-container');
         container.innerHTML = '';
         for (let i = 0; i < count; i++) {
             const value = table.installmentsValues[i] || '';
-            const isReadOnly = !State.isEditor ? 'readonly' : '';
-            const bgClass = State.isEditor ? 'bg-[#121214] border border-gray-700 text-white' : 'bg-transparent border-transparent px-0 text-gray-400';
-            container.innerHTML += `<div class="flex flex-col gap-1"><label class="text-[10px] text-gray-500 font-medium">Parcela ${i + 1}</label><input type="text" id="inst-val-${i}" value="${value}" placeholder="R$ 0,00" class="w-full text-sm rounded-xl outline-none p-3 ${bgClass}" maxlength="15" ${isReadOnly}></div>`;
+            const readOnly = !State.isEditor ? 'readonly' : '';
+            container.innerHTML += `
+                <div class="flex flex-col gap-1">
+                    <label class="field-label">Parcela ${i + 1}</label>
+                    <input type="text" id="inst-val-${i}" value="${value}" placeholder="R$ 0,00"
+                        class="field-input" maxlength="15" ${readOnly}>
+                </div>`;
         }
     }
 };
 
 // ============================================
-// MÓDULO DE SALVAMENTO E NAVEGAÇÃO
+// MÓDULO DE SALVAMENTO
 // ============================================
 const Save = {
     async tableData() {
         if (!State.currentTableId || !State.isEditor) return;
         const table = State.tables[State.currentTableId];
 
-        table.status = document.getElementById('sheet-status').value;
-        table.identification = document.getElementById('sheet-identification').value.trim();
-        table.seller = document.getElementById('sheet-seller').value;
-        table.sellerOther = document.getElementById('sheet-seller-other').value.trim();
-        table.saleDate = document.getElementById('sheet-sale-date').value;
-        table.paymentMethod = document.getElementById('sheet-payment-method').value;
-        table.missingAmount = document.getElementById('sheet-missing-amount').value.trim();
+        table.status           = document.getElementById('sheet-status').value;
+        table.identification   = document.getElementById('sheet-identification').value.trim();
+        table.seller           = document.getElementById('sheet-seller').value;
+        table.sellerOther      = document.getElementById('sheet-seller-other').value.trim();
+        table.saleDate         = document.getElementById('sheet-sale-date').value;
+        table.paymentMethod    = document.getElementById('sheet-payment-method').value;
+        table.missingAmount    = document.getElementById('sheet-missing-amount').value.trim();
         table.installmentsCount = document.getElementById('sheet-installments-count').value;
 
         for (let i = 0; i < 10; i++) {
@@ -410,8 +444,10 @@ const Save = {
                 if (inp) table.installmentsValues[i] = inp.value.trim();
             }
         }
+
         await this.submit(table);
     },
+
     async submit(table) {
         const btn = document.getElementById('save-btn');
         const originalHTML = btn.innerHTML;
@@ -420,19 +456,30 @@ const Save = {
         try {
             const result = await API.saveTable(table);
             if (result?.status === 'success') {
-                Render.all(); Sheet.close(); showToast('Mesa salva com sucesso! ✓', 'success');
-            } else showToast('Erro ao salvar dados', 'error');
-        } catch (error) { showToast('Erro de conexão', 'error'); }
-        finally { btn.innerHTML = originalHTML; btn.disabled = false; }
+                Render.all();
+                Sheet.close();
+                showToast('Alterações salvas com sucesso! ✓', 'success');
+            } else {
+                showToast('Erro ao salvar dados', 'error');
+            }
+        } catch (error) {
+            showToast('Erro de conexão', 'error');
+        } finally {
+            btn.innerHTML = originalHTML;
+            btn.disabled = false;
+        }
     }
 };
 
+// ============================================
+// NAVEGAÇÃO
+// ============================================
 const Nav = {
     switchTab(tabName) {
         const tabList = document.getElementById('tab-list');
-        const tabMap = document.getElementById('tab-map');
+        const tabMap  = document.getElementById('tab-map');
         const navList = document.getElementById('nav-list');
-        const navMap = document.getElementById('nav-map');
+        const navMap  = document.getElementById('nav-map');
 
         if (tabName === 'list') {
             tabList.classList.remove('hidden'); tabMap.classList.add('hidden');
@@ -443,13 +490,18 @@ const Nav = {
         }
     },
     updateNav(btn, active) {
-        if (active) { btn.classList.add('text-blue-500'); btn.classList.remove('text-gray-500'); btn.querySelector('i').classList.add('ph-fill'); }
-        else { btn.classList.remove('text-blue-500'); btn.classList.add('text-gray-500'); btn.querySelector('i').classList.remove('ph-fill'); }
+        if (active) {
+            btn.classList.add('text-blue-500'); btn.classList.remove('text-gray-500');
+            btn.querySelector('i').classList.add('ph-fill');
+        } else {
+            btn.classList.remove('text-blue-500'); btn.classList.add('text-gray-500');
+            btn.querySelector('i').classList.remove('ph-fill');
+        }
     }
 };
 
 // ============================================
-// MÓDULO PWA
+// PWA
 // ============================================
 let deferredPrompt = null;
 
@@ -461,11 +513,9 @@ const PWA = {
                     .catch(err => console.log('Erro no Service Worker:', err));
             });
         }
-
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
-
             if (!localStorage.getItem('install_dismissed')) {
                 setTimeout(() => {
                     const banner = document.getElementById('install-banner');
@@ -473,19 +523,14 @@ const PWA = {
                 }, 1000);
             }
         });
-
         window.addEventListener('appinstalled', () => {
             this.hideBanner('install-banner');
             deferredPrompt = null;
             showToast('App instalado com sucesso! ✓', 'success');
         });
     },
-
     async install() {
-        if (!deferredPrompt) {
-            showToast('Navegador não suporta atalho nativo.', 'warning');
-            return;
-        }
+        if (!deferredPrompt) { showToast('Navegador não suporta atalho nativo.', 'warning'); return; }
         try {
             deferredPrompt.prompt();
             const { outcome } = await deferredPrompt.userChoice;
@@ -493,7 +538,6 @@ const PWA = {
         } catch (error) { console.error(error); }
         finally { deferredPrompt = null; }
     },
-
     hideBanner(id) {
         const banner = document.getElementById(id);
         if (banner) banner.classList.remove('show');
@@ -504,19 +548,19 @@ const PWA = {
 // ============================================
 // FUNÇÕES GLOBAIS
 // ============================================
-window.switchTab = function(tabName) { Nav.switchTab(tabName); }
-window.openSheet = function(tableId) { Sheet.open(tableId); }
-window.closeSheet = function() { Sheet.close(); }
-window.showAuthModal = function() { Auth.showModal(); }
-window.closeAuthModal = function() { Auth.closeModal(); }
-window.authenticate = function() { Auth.authenticate(document.getElementById('auth-password').value); }
-window.saveTableData = function() { Save.tableData(); }
-window.filterList = function() { Render.list(document.getElementById('search-input').value); }
-window.toggleSellerOther = function() { Sheet.toggleSellerOther(); }
-window.togglePaymentFields = function() { Sheet.togglePaymentFields(); }
-window.renderInstallmentFields = function() { Sheet.renderInstallmentFields(); }
-window.installApp = function() { PWA.install(); }
-window.dismissInstallBanner = function() { PWA.hideBanner('install-banner'); }
+window.switchTab          = (tab)  => Nav.switchTab(tab);
+window.openSheet          = (id)   => Sheet.open(id);
+window.closeSheet         = ()     => Sheet.close();
+window.showAuthModal      = ()     => Auth.showModal();
+window.closeAuthModal     = ()     => Auth.closeModal();
+window.authenticate       = ()     => Auth.authenticate(document.getElementById('auth-password').value);
+window.saveTableData      = ()     => Save.tableData();
+window.filterList         = ()     => Render.list(document.getElementById('search-input').value);
+window.toggleSellerOther  = ()     => Sheet.toggleSellerOther();
+window.togglePaymentFields = ()    => Sheet.togglePaymentFields();
+window.renderInstallmentFields = () => Sheet.renderInstallmentFields();
+window.installApp         = ()     => PWA.install();
+window.dismissInstallBanner = ()   => PWA.hideBanner('install-banner');
 
 window.toggleSync = async function() {
     if (State.isSyncing) return;
@@ -527,15 +571,25 @@ window.toggleSync = async function() {
         await Initialize.mergeWithServerData();
         Render.all();
         showToast('Sincronizado com sucesso! ✓', 'success');
-    } catch (error) { showToast('Erro ao sincronizar', 'error'); }
-    finally { State.isSyncing = false; navSync.classList.remove('animate-spin'); }
-}
+    } catch (error) {
+        showToast('Erro ao sincronizar', 'error');
+    } finally {
+        State.isSyncing = false;
+        navSync.classList.remove('animate-spin');
+    }
+};
 
 function showToast(message, type = 'success') {
     const toast = document.getElementById('toast');
     toast.querySelector('div').textContent = message;
-    toast.classList.remove('bg-green-600', 'bg-red-600', 'bg-yellow-600');
-    toast.classList.add(type === 'error' ? 'bg-red-600' : type === 'warning' ? 'bg-yellow-600' : 'bg-green-600');
+    toast.classList.remove('bg-gradient-to-r', 'from-emerald-600', 'to-green-500', 'from-red-600', 'to-red-500', 'from-yellow-600', 'to-yellow-500');
+    if (type === 'error') {
+        toast.style.background = 'linear-gradient(135deg,#dc2626,#ef4444)';
+    } else if (type === 'warning') {
+        toast.style.background = 'linear-gradient(135deg,#d97706,#f59e0b)';
+    } else {
+        toast.style.background = 'linear-gradient(135deg,#059669,#10b981)';
+    }
     toast.classList.add('show');
     setTimeout(() => toast.classList.remove('show'), 3000);
 }
@@ -572,6 +626,7 @@ async function initApp() {
     }, CONFIG.syncInterval);
 }
 
+// Fallback: remove loading após 8s se travar
 setTimeout(() => {
     const loader = document.getElementById('loading-overlay');
     if (loader && !loader.classList.contains('opacity-0')) {
