@@ -36,11 +36,10 @@ const State = {
 };
 
 // ============================================
-// MÓDULO DE API (COM PROTEÇÃO CONTRA TRAVAMENTO)
+// MÓDULO DE API
 // ============================================
 const API = {
     async fetch(endpoint = '', data = null) {
-        // Trava de segurança: se o Google demorar mais de 10s, ele cancela e não trava o app
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000);
 
@@ -60,7 +59,7 @@ const API = {
 
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             return await response.json();
-            
+
         } catch (error) {
             clearTimeout(timeoutId);
             console.error('Erro na API:', error);
@@ -77,15 +76,9 @@ const API = {
         return {};
     },
 
+    // CORREÇÃO BUG 5: spread operator garante que todos os campos sejam enviados
     async saveTable(table) {
-        return await this.fetch('', {
-            id: table.id, number: table.number, status: table.status,
-            identification: table.identification, seller: table.seller,
-            sellerOther: table.sellerOther, saleDate: table.saleDate,
-            paymentMethod: table.paymentMethod, missingAmount: table.missingAmount,
-            installmentsCount: table.installmentsCount, installmentsValues: table.installmentsValues,
-            guests: table.guests
-        });
+        return await this.fetch('', { ...table });
     }
 };
 
@@ -129,7 +122,7 @@ const Initialize = {
 
     async mergeWithServerData() {
         const serverData = await API.loadData();
-        if(!serverData) return; // Proteção extra se vier vazio
+        if (!serverData) return;
 
         Object.entries(serverData).forEach(([id, data]) => {
             if (State.tables[id]) {
@@ -150,25 +143,28 @@ const Render = {
         this.list();
     },
 
+    // CORREÇÃO BUG 4: acumula HTML em arrays e atribui uma única vez
     map() {
         const sectorA = document.getElementById('sector-a');
         const sectorB = document.getElementById('sector-b');
-        if(!sectorA || !sectorB) return; 
-        
-        sectorA.innerHTML = '';
-        sectorB.innerHTML = '';
+        if (!sectorA || !sectorB) return;
+
+        const htmlA = [];
+        const htmlB = [];
 
         Object.values(State.tables).forEach(table => {
-            const pinHTML = this.createTablePin(table);
-            const sector = table.sector === 'A' ? sectorA : sectorB;
-            sector.innerHTML += pinHTML;
+            if (table.sector === 'A') htmlA.push(this.createTablePin(table));
+            else htmlB.push(this.createTablePin(table));
         });
+
+        sectorA.innerHTML = htmlA.join('');
+        sectorB.innerHTML = htmlB.join('');
     },
 
     createTablePin(table) {
         let statusKey = table.status ? table.status.toLowerCase() : 'livre';
-        const config = STATUS_CONFIG[statusKey] || STATUS_CONFIG['livre']; 
-        
+        const config = STATUS_CONFIG[statusKey] || STATUS_CONFIG['livre'];
+
         const label = table.identification
             ? `<span class="text-[8px] font-medium leading-tight mt-0.5 max-w-[40px] truncate text-center text-white/90">${table.identification}</span>`
             : '';
@@ -184,7 +180,7 @@ const Render = {
 
     list(searchText = '') {
         const container = document.getElementById('list-container');
-        if(!container) return;
+        if (!container) return;
 
         const lowerSearch = searchText.toLowerCase();
         const sorted = Object.values(State.tables).sort((a, b) => a.number - b.number);
@@ -258,7 +254,7 @@ const Auth = {
     updateUI() {
         const btnUnlock = document.getElementById('btn-unlock');
         const badgeUnlocked = document.getElementById('badge-unlocked');
-        if(!btnUnlock || !badgeUnlocked) return;
+        if (!btnUnlock || !badgeUnlocked) return;
         if (State.isEditor) {
             btnUnlock.classList.add('hidden');
             badgeUnlocked.classList.remove('hidden');
@@ -295,8 +291,8 @@ const Sheet = {
     },
     fillForm(table) {
         let statusKey = table.status ? table.status.toLowerCase() : 'livre';
-        if(!STATUS_CONFIG[statusKey]) statusKey = 'livre';
-        
+        if (!STATUS_CONFIG[statusKey]) statusKey = 'livre';
+
         document.getElementById('sheet-status').value = statusKey;
         document.getElementById('sheet-identification').value = table.identification || '';
         document.getElementById('sheet-seller').value = table.seller || '';
@@ -329,12 +325,12 @@ const Sheet = {
     },
     setFieldsDisabled(disabled) {
         ['sheet-status', 'sheet-identification', 'sheet-seller', 'sheet-sale-date', 'sheet-payment-method', 'sheet-missing-amount', 'sheet-installments-count'].forEach(id => {
-            const el = document.getElementById(id); if(el) el.disabled = disabled;
+            const el = document.getElementById(id); if (el) el.disabled = disabled;
         });
         ['sheet-identification', 'sheet-seller-other', 'sheet-missing-amount', 'sheet-sale-date'].forEach(id => {
             const el = document.getElementById(id);
-            if(el) {
-                if (disabled) { el.setAttribute('readonly', 'true'); el.classList.add('bg-transparent', 'border-transparent', 'px-0'); } 
+            if (el) {
+                if (disabled) { el.setAttribute('readonly', 'true'); el.classList.add('bg-transparent', 'border-transparent', 'px-0'); }
                 else { el.removeAttribute('readonly'); el.classList.remove('bg-transparent', 'border-transparent', 'px-0'); }
             }
         });
@@ -344,14 +340,18 @@ const Sheet = {
         const financialSection = document.getElementById('financial-section');
         const viewActions = document.getElementById('view-actions');
         const editActions = document.getElementById('edit-actions');
-        if(!editBadge) return;
+        if (!editBadge) return;
 
         if (State.isEditor) {
-            editBadge.classList.remove('hidden'); financialSection.classList.remove('hidden'); financialSection.classList.add('flex');
-            viewActions.classList.add('hidden'); editActions.classList.remove('hidden'); editActions.classList.add('flex');
+            editBadge.classList.remove('hidden');
+            financialSection.classList.remove('hidden'); financialSection.classList.add('flex');
+            viewActions.classList.add('hidden');
+            editActions.classList.remove('hidden'); editActions.classList.add('flex');
         } else {
-            editBadge.classList.add('hidden'); financialSection.classList.add('hidden'); financialSection.classList.remove('flex');
-            editActions.classList.add('hidden'); editActions.classList.remove('flex'); viewActions.classList.remove('hidden');
+            editBadge.classList.add('hidden');
+            financialSection.classList.add('hidden'); financialSection.classList.remove('flex');
+            editActions.classList.add('hidden'); editActions.classList.remove('flex');
+            viewActions.classList.remove('hidden');
         }
     },
     toggleSellerOther() {
@@ -361,8 +361,12 @@ const Sheet = {
     togglePaymentFields() {
         const method = document.getElementById('sheet-payment-method').value;
         const wrapper = document.getElementById('installments-wrapper');
-        if (method === 'parcelado') { wrapper.classList.remove('hidden'); wrapper.classList.add('flex'); this.renderInstallmentFields(); } 
-        else { wrapper.classList.add('hidden'); wrapper.classList.remove('flex'); }
+        if (method === 'parcelado') {
+            wrapper.classList.remove('hidden'); wrapper.classList.add('flex');
+            this.renderInstallmentFields();
+        } else {
+            wrapper.classList.add('hidden'); wrapper.classList.remove('flex');
+        }
     },
     renderInstallmentFields() {
         const table = State.tables[State.currentTableId];
@@ -395,7 +399,11 @@ const Save = {
         table.missingAmount = document.getElementById('sheet-missing-amount').value.trim();
         table.installmentsCount = document.getElementById('sheet-installments-count').value;
 
-        for (let i = 0; i < 10; i++) table.guests[i] = (document.getElementById(`guest-${i}`).value || '').trim();
+        // CORREÇÃO BUG 6: proteção contra elemento null
+        for (let i = 0; i < 10; i++) {
+            const el = document.getElementById(`guest-${i}`);
+            table.guests[i] = el ? el.value.trim() : '';
+        }
 
         table.installmentsValues = Array(6).fill('');
         if (table.paymentMethod === 'parcelado') {
@@ -417,7 +425,7 @@ const Save = {
             if (result?.status === 'success') {
                 Render.all(); Sheet.close(); showToast('Mesa salva com sucesso! ✓', 'success');
             } else showToast('Erro ao salvar dados', 'error');
-        } catch (error) { showToast('Erro de conexão', 'error'); } 
+        } catch (error) { showToast('Erro de conexão', 'error'); }
         finally { btn.innerHTML = originalHTML; btn.disabled = false; }
     }
 };
@@ -438,13 +446,13 @@ const Nav = {
         }
     },
     updateNav(btn, active) {
-        if (active) { btn.classList.add('text-blue-500'); btn.classList.remove('text-gray-500'); btn.querySelector('i').classList.add('ph-fill'); } 
+        if (active) { btn.classList.add('text-blue-500'); btn.classList.remove('text-gray-500'); btn.querySelector('i').classList.add('ph-fill'); }
         else { btn.classList.remove('text-blue-500'); btn.classList.add('text-gray-500'); btn.querySelector('i').classList.remove('ph-fill'); }
     }
 };
 
 // ============================================
-// MÓDULO PWA (EXIBIÇÃO CONTÍNUA DO BANNER)
+// MÓDULO PWA
 // ============================================
 let deferredPrompt = null;
 
@@ -460,11 +468,10 @@ const PWA = {
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            
+
             const iosBanner = document.getElementById('ios-banner');
             if (iosBanner) iosBanner.classList.remove('show');
-            
-            // O banner do Android aparece e FICA na tela. Não há setTimeout escondendo ele.
+
             if (!localStorage.getItem('install_dismissed')) {
                 setTimeout(() => {
                     const banner = document.getElementById('install-banner');
@@ -491,7 +498,7 @@ const PWA = {
             deferredPrompt.prompt();
             const { outcome } = await deferredPrompt.userChoice;
             if (outcome === 'accepted') this.hideBanner('install-banner');
-        } catch (error) { console.error(error); } 
+        } catch (error) { console.error(error); }
         finally { deferredPrompt = null; }
     },
 
@@ -508,7 +515,7 @@ const PWA = {
 
         if (isIos && !isStandalone && !dismissed) {
             setTimeout(() => {
-                if (!deferredPrompt) { 
+                if (!deferredPrompt) {
                     const banner = document.getElementById('ios-banner');
                     if (banner) banner.classList.add('show');
                 }
@@ -544,7 +551,7 @@ window.toggleSync = async function() {
         await Initialize.mergeWithServerData();
         Render.all();
         showToast('Sincronizado com sucesso! ✓', 'success');
-    } catch (error) { showToast('Erro ao sincronizar', 'error'); } 
+    } catch (error) { showToast('Erro ao sincronizar', 'error'); }
     finally { State.isSyncing = false; navSync.classList.remove('animate-spin'); }
 }
 
@@ -558,23 +565,26 @@ function showToast(message, type = 'success') {
 }
 
 // ============================================
-// INICIALIZAÇÃO - REMOÇÃO GARANTIDA DA TELA DE CARREGAMENTO
+// INICIALIZAÇÃO
 // ============================================
 async function initApp() {
     try {
         State.init();
         Initialize.createTables();
         PWA.init();
-        
+
         await Initialize.mergeWithServerData();
-        
+
         Render.all();
         Auth.updateUI();
+
+        // CORREÇÃO BUG 8: evento registrado após o DOM estar pronto
+        document.getElementById('sheet-overlay')?.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+
     } catch (error) {
         console.error('Erro Fatal na Inicialização:', error);
-        Render.all(); // Desenha o painel mesmo que offline
+        Render.all();
     } finally {
-        // Garantia absoluta de que a tela de loading vai sumir!
         const loader = document.getElementById('loading-overlay');
         if (loader) {
             loader.classList.add('opacity-0', 'pointer-events-none');
@@ -587,7 +597,6 @@ async function initApp() {
     }, CONFIG.syncInterval);
 }
 
-// Execução segura: se o celular demorar, ele força sumir a tela de loading após 8 segundos.
 setTimeout(() => {
     const loader = document.getElementById('loading-overlay');
     if (loader && !loader.classList.contains('opacity-0')) {
@@ -602,5 +611,3 @@ if (document.readyState === 'loading') {
 } else {
     initApp();
 }
-
-document.getElementById('sheet-overlay')?.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
