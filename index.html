@@ -2,121 +2,64 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Painel de Gestão - Baile de Gala Dom Pedro II</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#121214">
+    <meta name="description" content="Painel de Gestão - Baile de Gala Dom Pedro II 2026">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Baile 2026">
+
+    <title>Baile Dom Pedro II - Gestão 2026</title>
+
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="icon-192.png">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
-        * { box-sizing: border-box; touch-action: manipulation; }
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; touch-action: manipulation; }
 
-        body {
+        html, body {
+            height: 100%; width: 100%;
+            margin: 0; padding: 0;
             font-family: 'Inter', sans-serif;
-            background: #0f1117;
-            color: #f3f4f6;
-            margin: 0;
-            overflow: hidden; /* Trava o corpo para parecer app */
+            background-color: #121214;
+            color: #e1e1e6;
+            overflow: hidden;
         }
 
-        /* ── Scrollbars Globais ── */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #1e2130; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb { background: #3a3f55; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #5a607a; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
 
-        /* ── Header gradient line ── */
-        .header-accent {
-            background: linear-gradient(90deg, #3b82f6, #8b5cf6, #06b6d4);
-            height: 3px;
-        }
+        /* ── Animações Gerais ── */
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .animate-fade-in { animation: fadeIn 0.3s ease-out; }
 
-        /* ── Status counter cards ── */
-        .stat-card {
-            background: rgba(255,255,255,0.04);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 10px;
-            padding: 6px 12px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 12px;
-            white-space: nowrap;
-            transition: background 0.2s;
+        /* ── Animações do Loading Premium ── */
+        @keyframes spin-reverse {
+            from { transform: rotate(360deg); }
+            to { transform: rotate(0deg); }
         }
-        .stat-card:hover { background: rgba(255,255,255,0.08); }
-        .stat-dot {
-            width: 10px; height: 10px;
-            border-radius: 50%;
-            flex-shrink: 0;
-            box-shadow: 0 0 6px currentColor;
-        }
-        .stat-count { font-weight: 700; font-size: 16px; line-height: 1; }
-        .stat-label { color: #9ca3af; font-size: 10px; margin-top: 1px; }
-
-        /* ── Connection badge ── */
-        .conn-badge {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 11px;
-            padding: 4px 10px;
-            border-radius: 20px;
-            border: 1px solid rgba(255,255,255,0.1);
-            background: rgba(255,255,255,0.04);
-            color: #9ca3af;
-        }
-        .conn-badge .dot {
-            width: 7px; height: 7px;
-            border-radius: 50%;
-            background: #6b7280;
-            transition: background 0.3s;
-        }
-        .conn-badge.online .dot { background: #22c55e; box-shadow: 0 0 6px #22c55e; }
-        .conn-badge.error .dot { background: #ef4444; box-shadow: 0 0 6px #ef4444; }
-
-        /* ── Map area (ESTILO APLICATIVO NATIVO) ── */
-        .map-wrapper {
-            overflow: auto;
-            -webkit-overflow-scrolling: touch; /* Rolagem macia no iOS */
-            overscroll-behavior: none; /* Impede puxar para atualizar no topo/fim */
-            border-radius: 16px;
-            border: 1px solid rgba(255,255,255,0.07);
-            background: #d8d8d0;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.2);
-            position: relative;
-            
-            /* Esconder Scrollbars para visual limpo de APP */
-            scrollbar-width: none; /* Firefox */
-            -ms-overflow-style: none; /* IE/Edge */
-        }
-        .map-wrapper::-webkit-scrollbar {
-            display: none; /* Chrome/Safari */
+        .animate-\[spin_3s_linear_infinite_reverse\] {
+            animation: spin-reverse 3s linear infinite;
         }
 
-        /* ── Onda sonora (ripple) ── */
-        @keyframes ripple-wave {
-            0%   { transform: translate(-50%, -50%) scale(1);   opacity: 0.55; }
-            100% { transform: translate(-50%, -50%) scale(2.6); opacity: 0; }
-        }
-        @keyframes ripple-wave2 {
-            0%   { transform: translate(-50%, -50%) scale(1);   opacity: 0.40; }
-            100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; }
-        }
-        @keyframes ripple-wave3 {
-            0%   { transform: translate(-50%, -50%) scale(1);   opacity: 0.25; }
-            100% { transform: translate(-50%, -50%) scale(1.8); opacity: 0; }
-        }
-        @keyframes pin-breathe {
-            0%, 100% { box-shadow: var(--pin-glow), 0 4px 12px rgba(0,0,0,0.5); }
-            50%      { box-shadow: var(--pin-glow-strong), 0 4px 12px rgba(0,0,0,0.5); }
-        }
+        /* ── Animações Premium dos Pinos (Ondas e Pulso) ── */
+        @keyframes ripple-wave { 0% { transform: translate(-50%, -50%) scale(1); opacity: 0.55; } 100% { transform: translate(-50%, -50%) scale(2.6); opacity: 0; } }
+        @keyframes ripple-wave2 { 0% { transform: translate(-50%, -50%) scale(1); opacity: 0.40; } 100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; } }
+        @keyframes ripple-wave3 { 0% { transform: translate(-50%, -50%) scale(1); opacity: 0.25; } 100% { transform: translate(-50%, -50%) scale(1.8); opacity: 0; } }
+        @keyframes pin-breathe { 0%, 100% { box-shadow: var(--pin-glow), 0 4px 12px rgba(0,0,0,0.5); } 50% { box-shadow: var(--pin-glow-strong), 0 4px 12px rgba(0,0,0,0.5); } }
 
-        /* ── Table pins ── */
+        /* ── Pinos de Mesa ── */
         .table-pin {
             position: absolute;
             transform: translate(-50%, -50%);
-            cursor: pointer;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -125,12 +68,11 @@
             border: 2px solid;
             transition: transform 0.18s ease, box-shadow 0.18s ease;
             z-index: 10;
+            cursor: pointer;
             animation: pin-breathe 2.8s ease-in-out infinite;
         }
-        .table-pin:hover, .table-pin:active {
-            transform: translate(-50%, -50%) scale(1.28) !important;
-            z-index: 50;
-        }
+        .table-pin:active { transform: translate(-50%, -50%) scale(0.88) !important; }
+        .table-pin:hover { transform: translate(-50%, -50%) scale(1.15) !important; filter: brightness(1.15); z-index: 50; }
         .table-pin:hover .wave, .table-pin:active .wave { display: none; }
 
         .wave {
@@ -144,17 +86,17 @@
         .wave-1 { animation: ripple-wave  2.4s ease-out infinite; }
         .wave-2 { animation: ripple-wave2 2.4s ease-out infinite 0.6s; }
         .wave-3 { animation: ripple-wave3 2.4s ease-out infinite 1.2s; }
-        
+
         .table-pin .pin-num {
-            font-size: 10px;
+            font-size: 14px;
             font-weight: 800;
             line-height: 1;
             color: #fff;
             text-shadow: 0 1px 3px rgba(0,0,0,0.6);
-            letter-spacing: -0.3px;
+            z-index: 2;
         }
         .table-pin .pin-id {
-            font-size: 6px;
+            font-size: 8px;
             font-weight: 600;
             color: rgba(255,255,255,0.9);
             text-align: center;
@@ -162,801 +104,430 @@
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-            line-height: 1.2;
-            margin-top: 1px;
-        }
-        
-        /* Pin tooltip */
-        .pin-tooltip {
-            position: absolute;
-            bottom: calc(100% + 6px);
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(10,12,20,0.95);
-            border: 1px solid rgba(255,255,255,0.12);
-            color: #fff;
-            font-size: 10px;
-            padding: 5px 10px;
-            border-radius: 8px;
-            white-space: nowrap;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.15s;
-            z-index: 100;
-            backdrop-filter: blur(6px);
-            box-shadow: 0 4px 16px rgba(0,0,0,0.5);
-        }
-        .table-pin:hover .pin-tooltip, .table-pin:active .pin-tooltip { opacity: 1; }
-        .pin-tooltip::after {
-            content: '';
-            position: absolute;
-            top: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            border: 5px solid transparent;
-            border-top-color: rgba(10,12,20,0.95);
+            margin-top: -2px;
+            z-index: 2;
         }
 
-        /* ── Modal ── */
-        .glass-modal {
-            background: rgba(17, 20, 35, 0.97);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,255,255,0.1);
+        /* ── Área do Mapa (Estilo App Nativo) ── */
+        .map-wrapper {
+            overflow: auto;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: none;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE/Edge */
         }
+        .map-wrapper::-webkit-scrollbar { display: none; }
 
-        /* ── Section divider ── */
-        .section-label {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 10px;
-            font-weight: 700;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            color: #6b7280;
-            margin-bottom: 12px;
+        /* ── Outros Componentes (Sheet, Toast, Banner) ── */
+        .bottom-sheet {
+            transform: translateY(100%);
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .section-label::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: rgba(255,255,255,0.07);
-        }
+        .bottom-sheet.active { transform: translateY(0); }
 
-        /* ── Form inputs ── */
-        .field-input {
-            width: 100%;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            color: #f3f4f6;
-            font-size: 13px;
-            border-radius: 10px;
-            padding: 9px 12px;
-            outline: none;
-            transition: border-color 0.2s, background 0.2s;
-        }
-        .field-input:focus {
-            border-color: #3b82f6;
-            background: rgba(59,130,246,0.08);
-        }
-        .field-input[readonly], .field-input:disabled {
-            background: transparent !important;
+        .overlay { opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        .overlay.active { opacity: 1; pointer-events: auto; }
+
+        input:disabled, select:disabled, textarea:disabled {
+            background-color: transparent !important;
             border-color: transparent !important;
-            color: #6b7280 !important;
+            color: #a1a1aa !important;
             cursor: default;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
         }
-        .field-label {
-            font-size: 11px;
-            font-weight: 600;
-            color: #9ca3af;
-            margin-bottom: 5px;
-            display: block;
+        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
+
+        .toast {
+            position: fixed;
+            top: 1rem; left: 50%;
+            transform: translateX(-50%) translateY(-120%);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 300;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+        @supports (padding: max(0px)) {
+            .pt-safe { padding-top: max(0.5rem, env(safe-area-inset-top)); }
+            .pb-safe { padding-bottom: max(0.5rem, env(safe-area-inset-bottom)); }
         }
 
-        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.7); cursor: pointer; }
-
-        /* ── Custom Status Dropdown ── */
-        .custom-select-wrap { position: relative; }
-        .custom-select-btn {
-            width: 100%;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            color: #f3f4f6;
-            font-size: 13px;
-            border-radius: 10px;
-            padding: 9px 36px 9px 12px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: border-color 0.2s, background 0.2s;
-            user-select: none;
+        .install-banner {
+            transform: translateY(-150%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .custom-select-btn:hover { border-color: rgba(255,255,255,0.25); background: rgba(255,255,255,0.08); }
-        .custom-select-btn.open { border-color: #3b82f6; background: rgba(59,130,246,0.08); }
-        .custom-select-btn.disabled { opacity: 0.5; cursor: default; pointer-events: none; }
-        .custom-select-btn::after {
-            content: '';
-            position: absolute;
-            right: 12px; top: 50%;
-            transform: translateY(-50%);
-            border-left: 5px solid transparent;
-            border-right: 5px solid transparent;
-            border-top: 5px solid #6b7280;
-            transition: transform 0.2s;
-        }
-        .custom-select-btn.open::after { transform: translateY(-50%) rotate(180deg); }
-
-        .custom-select-menu {
-            display: none;
-            position: absolute;
-            top: calc(100% + 6px);
-            left: 0; right: 0;
-            background: #1a1d2e;
-            border: 1px solid rgba(255,255,255,0.12);
-            border-radius: 12px;
-            overflow: hidden;
-            z-index: 200;
-            box-shadow: 0 16px 40px rgba(0,0,0,0.6);
-        }
-        .custom-select-menu.open { display: block; }
-        .custom-select-option {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 14px;
-            font-size: 13px;
-            color: #e5e7eb;
-            cursor: pointer;
-            transition: background 0.15s;
-        }
-        .custom-select-option:hover { background: rgba(255,255,255,0.08); }
-        .custom-select-option.selected { background: rgba(59,130,246,0.15); color: #fff; }
-        .option-dot {
-            width: 11px; height: 11px;
-            border-radius: 50%;
-            flex-shrink: 0;
-            box-shadow: 0 0 6px currentColor;
-        }
-
-        /* Selects nativos */
-        select.field-input {
-            appearance: none;
-            -webkit-appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 12px center;
-            padding-right: 36px;
-            background-color: #1a1d2e;
-            color-scheme: dark;
-        }
-        select.field-input option {
-            background-color: #1a1d2e;
-            color: #f3f4f6;
-        }
-
-        /* ── Auth modal & Toast ── */
-        #auth-modal { backdrop-filter: blur(8px); }
-        #toast {
-            background: linear-gradient(135deg, #059669, #10b981);
-            border: 1px solid rgba(255,255,255,0.15);
-        }
-
-        /* Animação Float da dica de arrasto */
-        @keyframes float-hint {
-            0%, 100% { transform: translate(-50%, 0); }
-            50% { transform: translate(-50%, -5px); }
-        }
-        .animate-float { animation: float-hint 2s ease-in-out infinite; }
+        .install-banner.show { transform: translateY(0); }
     </style>
 </head>
-<body class="min-h-screen flex flex-col" style="height:100dvh;">
+<body class="h-screen w-screen flex flex-col overflow-hidden bg-[#121214]">
 
+    <!-- ========================================== -->
+    <!-- TELA DE LOADING MODERNA E PREMIUM          -->
+    <!-- ========================================== -->
     <div id="loading-overlay" class="fixed inset-0 z-[100] flex flex-col items-center justify-center transition-opacity duration-500 bg-[#0a0c13]/95 backdrop-blur-md">
         <div class="relative flex items-center justify-center mb-8">
             <div class="absolute w-28 h-28 border-t-2 border-b-2 border-blue-500/60 rounded-full animate-[spin_2s_linear_infinite]"></div>
             <div class="absolute w-32 h-32 border-l-2 border-r-2 border-purple-500/40 rounded-full animate-[spin_3s_linear_infinite_reverse]"></div>
             <div class="absolute w-20 h-20 bg-blue-600/20 rounded-full animate-pulse blur-xl"></div>
-            <img src="https://drive.google.com/thumbnail?id=18jejAaZU9pPJbyuF4PHM4aGkwp9G2zAD&sz=w400"
+            
+            <!-- Usando a imagem de ícone para funcionar rápido -->
+            <img src="icon-192.png" 
                  alt="Símbolo Dom Pedro II" 
-                 class="h-16 w-auto object-contain relative z-10 drop-shadow-[0_0_15px_rgba(255,255,255,0.15)]">
+                 class="h-16 w-16 object-cover rounded-2xl relative z-10 drop-shadow-[0_0_15px_rgba(255,255,255,0.15)]">
         </div>
         <h2 class="text-sm font-bold tracking-[0.25em] uppercase bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">Dom Pedro II</h2>
         <p class="text-gray-500 text-[10px] mt-2.5 uppercase tracking-widest animate-pulse">Preparando o Salão...</p>
     </div>
 
-    <div id="auth-modal" class="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 p-4 opacity-0 pointer-events-none transition-opacity duration-300">
-        <div class="bg-[#12151f] border border-white/10 p-7 rounded-2xl shadow-2xl w-full max-w-xs text-center transform scale-95 transition-transform duration-300" id="auth-content">
-            <div class="w-14 h-14 bg-blue-600/20 border border-blue-500/30 rounded-2xl flex items-center justify-center mx-auto mb-5">
+    <!-- Modal de Senha Original -->
+    <div id="auth-modal" class="overlay fixed inset-0 z-[200] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+        <div class="bg-gray-900 p-8 rounded-3xl shadow-2xl w-full max-w-sm border border-gray-800 text-center" id="auth-content">
+            <div class="w-16 h-16 bg-blue-500/20 border border-blue-500/30 rounded-2xl flex items-center justify-center mx-auto mb-6">
                 <i class="ph ph-lock-key text-3xl text-blue-400"></i>
             </div>
-            <h2 class="text-base font-bold text-white mb-1">Acesso Restrito</h2>
-            <p class="text-gray-500 text-xs mb-5">Digite a senha para habilitar edição.</p>
-            <input type="password" id="auth-password"
-                class="field-input text-center mb-2"
-                placeholder="Senha de administrador">
-            <p id="auth-error" class="text-red-400 text-xs font-semibold mb-4 hidden">Senha incorreta.</p>
-            <div class="flex gap-2 mt-4">
-                <button type="button" onclick="closeAuthModal()" class="flex-1 py-2.5 text-xs font-semibold text-gray-400 border border-white/10 rounded-xl hover:bg-white/5 transition-colors">Cancelar</button>
-                <button type="button" onclick="authenticate()" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-xl transition-colors">Desbloquear</button>
+            <h2 class="text-2xl font-bold text-white mb-2">Acesso Restrito</h2>
+            <p class="text-gray-400 text-sm mb-8">Digite a senha para gerenciar as mesas.</p>
+            <input
+                type="password"
+                id="auth-password"
+                inputmode="numeric"
+                maxlength="12"
+                onkeydown="if(event.key==='Enter') authenticate()"
+                class="w-full bg-gray-800 border border-gray-700 text-white rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent block p-4 outline-none text-center text-lg tracking-widest transition-all mb-2"
+                placeholder="••••••••"
+                aria-label="Senha de acesso">
+            <p id="auth-error" class="text-red-400 text-sm font-medium hidden mb-4">Senha incorreta. Tente novamente.</p>
+            <div class="flex gap-3 mt-4">
+                <button onclick="closeAuthModal()" class="flex-1 py-3 text-sm font-semibold text-gray-300 bg-gray-800 rounded-xl hover:bg-gray-700 transition-colors active:bg-gray-600">
+                    Cancelar
+                </button>
+                <button onclick="authenticate()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-colors active:bg-blue-800">
+                    Desbloquear
+                </button>
             </div>
         </div>
     </div>
 
-    <div class="header-accent flex-shrink-0"></div>
-    <header class="bg-[#12151f] border-b border-white/[0.07] py-3 px-4 md:px-6 flex-shrink-0 z-10">
-        <div class="max-w-screen-2xl mx-auto flex flex-col xl:flex-row justify-between items-start xl:items-center gap-3">
-            <div class="flex items-center gap-4">
-                <img src="https://drive.google.com/thumbnail?id=18jejAaZU9pPJbyuF4PHM4aGkwp9G2zAD&sz=w400"
-                     alt="Logo" class="h-11 w-auto object-contain rounded-lg">
+    <!-- BANNER DE INSTALAÇÃO - Android (Topo) -->
+    <div id="install-banner" class="install-banner fixed left-4 right-4 z-[90] shadow-2xl top-4 pt-safe">
+        <div class="bg-gradient-to-r from-[#1c1c20] to-[#25252b] border border-blue-500/40 rounded-2xl p-4 flex items-center gap-3 shadow-[0_8px_32px_rgba(59,130,246,0.25)]">
+            <img src="icon-192.png" alt="Ícone" class="w-12 h-12 rounded-xl flex-shrink-0 shadow-md">
+            <div class="flex-1 min-w-0">
+                <p class="text-white font-bold text-sm leading-tight">Instalar App</p>
+                <p class="text-gray-400 text-xs mt-0.5">Adicionar à tela inicial</p>
+            </div>
+            <button
+                onclick="if(typeof installApp === 'function') installApp();"
+                class="bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white px-4 py-2.5 rounded-xl text-sm font-bold transition-colors flex-shrink-0 shadow-lg">
+                Instalar
+            </button>
+            <button
+                onclick="document.getElementById('install-banner').classList.remove('show'); localStorage.setItem('install_dismissed', 'true');"
+                class="text-gray-500 hover:text-gray-300 p-1 flex-shrink-0 transition-colors"
+                aria-label="Fechar banner">
+                <i class="ph ph-x text-lg"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Cabeçalho Principal (Original) -->
+    <header class="bg-[#1c1c20] pt-safe px-4 pb-3 border-b border-gray-800 z-10 flex-shrink-0 shadow-lg mt-14">
+        <div class="flex justify-between items-center mt-2">
+            <div class="flex items-center gap-3">
+                <img src="icon-192.png" alt="Logo" class="w-12 h-12 rounded-xl shadow-lg border border-gray-700 object-cover">
                 <div>
-                    <h1 class="text-base md:text-lg font-bold text-white leading-tight">Baile de Gala Dom Pedro II</h1>
-                    <div class="flex items-center gap-2 mt-0.5">
-                        <p class="text-gray-500 text-xs">Gestão de Patrocínios · 2026</p>
-                        <div id="conn-badge" class="conn-badge">
-                            <div class="dot"></div>
-                            <span id="conn-label">Conectando...</span>
-                        </div>
-                    </div>
+                    <h1 class="text-base font-bold text-white leading-tight">Baile Dom Pedro II</h1>
+                    <p class="text-[11px] text-gray-400">Gestão 2026</p>
                 </div>
             </div>
-
-            <div class="flex flex-wrap items-center gap-2">
-                <div id="stats-bar" class="flex flex-wrap gap-2">
-                    <div class="stat-card">
-                        <div class="stat-dot" style="background:#22c55e;color:#22c55e"></div>
-                        <div><div class="stat-count" id="cnt-livre">–</div><div class="stat-label">Livres</div></div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-dot" style="background:#a855f7;color:#a855f7"></div>
-                        <div><div class="stat-count" id="cnt-negociacao">–</div><div class="stat-label">Negociação</div></div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-dot" style="background:#f97316;color:#f97316"></div>
-                        <div><div class="stat-count" id="cnt-reservada">–</div><div class="stat-label">Reservadas</div></div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-dot" style="background:#06b6d4;color:#06b6d4"></div>
-                        <div><div class="stat-count" id="cnt-patrocinio">–</div><div class="stat-label">Patrocínio</div></div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-dot" style="background:#6b7280;color:#6b7280"></div>
-                        <div><div class="stat-count" id="cnt-bloqueada">–</div><div class="stat-label">Bloqueadas</div></div>
-                    </div>
+            <div class="flex items-center gap-2">
+                <button
+                    onclick="showAuthModal()"
+                    id="btn-unlock"
+                    class="w-10 h-10 flex items-center justify-center bg-gray-800 hover:bg-gray-700 text-blue-400 rounded-full border border-gray-700 shadow-md active:bg-gray-600 transition-colors"
+                    aria-label="Desbloquear acesso de edição">
+                    <i class="ph ph-lock-key text-lg"></i>
+                </button>
+                <div id="badge-unlocked" class="hidden items-center gap-1.5 bg-green-500/20 text-green-400 px-3 py-1.5 rounded-full border border-green-500/30 text-xs font-bold">
+                    <i class="ph ph-check-circle"></i> Admin
                 </div>
+            </div>
+        </div>
+
+        <!-- Legenda -->
+        <div class="flex overflow-x-auto no-scrollbar gap-2 mt-4 pb-1">
+            <div class="flex-shrink-0 flex items-center gap-1.5 bg-gray-800/50 px-3 py-1.5 rounded-full border border-gray-700 text-[11px] whitespace-nowrap">
+                <div class="w-2.5 h-2.5 rounded-full bg-green-500"></div> Livre
+            </div>
+            <div class="flex-shrink-0 flex items-center gap-1.5 bg-gray-800/50 px-3 py-1.5 rounded-full border border-gray-700 text-[11px] whitespace-nowrap">
+                <div class="w-2.5 h-2.5 rounded-full bg-purple-500"></div> Negociação
+            </div>
+            <div class="flex-shrink-0 flex items-center gap-1.5 bg-gray-800/50 px-3 py-1.5 rounded-full border border-gray-700 text-[11px] whitespace-nowrap">
+                <div class="w-2.5 h-2.5 rounded-full bg-orange-500"></div> Reservada
+            </div>
+            <div class="flex-shrink-0 flex items-center gap-1.5 bg-gray-800/50 px-3 py-1.5 rounded-full border border-gray-700 text-[11px] whitespace-nowrap">
+                <div class="w-2.5 h-2.5 rounded-full bg-cyan-500"></div> Patrocínio
+            </div>
+            <div class="flex-shrink-0 flex items-center gap-1.5 bg-gray-800/50 px-3 py-1.5 rounded-full border border-gray-700 text-[11px] whitespace-nowrap">
+                <div class="w-2.5 h-2.5 rounded-full bg-gray-400"></div> Bloqueada
             </div>
         </div>
     </header>
 
-    <main class="flex-1 p-2 md:p-4 overflow-hidden flex flex-col min-h-0 relative">
-        
-        <div id="mobile-swipe-hint" class="xl:hidden absolute top-6 left-1/2 z-20 bg-black/60 backdrop-blur-md px-4 py-2 rounded-full text-white text-[11px] flex items-center gap-2 pointer-events-none shadow-lg animate-float transition-opacity duration-1000">
-            <i class="ph ph-hand-swipe-left text-lg"></i>
-            <span>Arraste para navegar na planta</span>
+    <!-- ÁREA PRINCIPAL -->
+    <main class="flex-1 relative overflow-hidden flex flex-col">
+
+        <!-- ========================================== -->
+        <!-- ABA: LISTA (MANTIDA ORIGINALMENTE)         -->
+        <!-- ========================================== -->
+        <div id="tab-list" class="absolute inset-0 overflow-y-auto no-scrollbar p-4 flex flex-col gap-4 bg-[#121214] animate-fade-in">
+            <div class="relative sticky top-0 bg-[#121214] z-10 pb-2">
+                <i class="ph ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg pointer-events-none"></i>
+                <input
+                    type="text"
+                    id="search-input"
+                    onkeyup="filterList()"
+                    placeholder="Buscar mesa ou responsável..."
+                    class="w-full bg-[#1c1c20] border border-gray-800 text-white rounded-2xl pl-11 pr-4 py-3.5 focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm transition-all"
+                    aria-label="Buscar mesas">
+            </div>
+            <div id="list-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-24">
+                <!-- Populado via JavaScript -->
+            </div>
         </div>
 
-        <div class="map-wrapper flex-1 min-h-0" id="map-container">
-            <div class="relative mx-auto" style="width:1414px; height:1000px;">
-                <img src="https://drive.google.com/thumbnail?id=1XA47nT-LdQx1V9zhwsqit7Fx-emr-j59&sz=w2500"
-                     alt="Planta Arquitetônica"
-                     class="absolute inset-0 w-full h-full object-contain pointer-events-none z-0">
-                <div id="pins-layer" class="absolute inset-0 z-10"></div>
+        <!-- ========================================== -->
+        <!-- ABA: MAPA (MODERNO E FLUIDO)               -->
+        <!-- ========================================== -->
+        <div id="tab-map" class="absolute inset-0 hidden overflow-hidden bg-[#111113]">
+            
+            <!-- Aviso flutuante para arrastar -->
+            <div class="absolute top-4 left-1/2 -translate-x-1/2 z-20 bg-black/60 backdrop-blur-md px-4 py-2 rounded-full text-white text-[11px] flex items-center gap-2 pointer-events-none shadow-lg animate-pulse">
+                <i class="ph ph-hand-swipe-left text-lg"></i>
+                <span>Arraste para navegar na planta</span>
+            </div>
+
+            <!-- Wrapper para rolagem de toque no estilo de app -->
+            <div class="map-wrapper w-full h-full pb-20"> <!-- pb-20 para não sobrepor na barra de navegação inferior -->
+                <!-- Container da imagem 1414x1000 exata como configurada -->
+                <div class="relative mx-auto" style="width:1414px; height:1000px; max-width: none;">
+                    
+                    <img src="mapa.png" 
+                         alt="Planta Arquitetônica"
+                         class="absolute inset-0 w-full h-full object-contain pointer-events-none z-0"
+                         onerror="this.style.display='none'; document.getElementById('map-fallback').style.display='flex';">
+                    
+                    <!-- Fallback se a imagem der erro -->
+                    <div id="map-fallback" class="hidden absolute inset-0 bg-gray-900 border border-gray-700 items-center justify-center flex-col gap-3 p-8 text-center rounded-2xl m-4">
+                        <i class="ph ph-image-broken text-5xl text-gray-600"></i>
+                        <p class="text-gray-400 text-sm font-medium">Imagem da planta (mapa.png) não carregou</p>
+                    </div>
+
+                    <!-- Aqui é onde o app.js vai injetar os pinos automaticamente! -->
+                    <div id="pins-layer" class="absolute inset-0 z-10"></div>
+                </div>
             </div>
         </div>
     </main>
 
-    <div id="table-modal" class="fixed inset-0 z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300 bg-black/70 p-4">
-        <div class="glass-modal rounded-2xl w-full max-w-2xl max-h-[92dvh] flex flex-col overflow-hidden shadow-2xl transform scale-95 transition-transform duration-300" id="modal-content">
-            
-            <div class="px-5 py-4 border-b border-white/[0.08] flex justify-between items-center bg-white/[0.03] flex-shrink-0">
-                <div class="flex items-center gap-3">
-                    <div id="modal-status-indicator" class="w-3.5 h-3.5 rounded-full bg-green-500"></div>
-                    <h3 class="text-lg font-bold text-white" id="modal-title">Mesa 00</h3>
-                    <span id="edit-badge" class="hidden bg-blue-600/20 text-blue-400 border border-blue-500/40 text-[9px] uppercase font-bold px-2.5 py-0.5 rounded-full tracking-widest">Edição</span>
+    <!-- Navegação Inferior (Original) -->
+    <nav class="bg-[#1c1c20] border-t border-gray-800 flex justify-around pb-safe pt-2 px-2 z-20 absolute bottom-0 w-full h-[62px] shadow-2xl">
+        <button onclick="switchTab('list')" id="nav-list"
+            class="flex-1 flex flex-col items-center justify-center text-blue-500 py-1 rounded-lg transition-colors"
+            aria-label="Lista de mesas">
+            <i class="ph-fill ph-list-dashes text-2xl mb-0.5"></i>
+            <span class="text-[10px] font-semibold">Lista</span>
+        </button>
+        <button onclick="switchTab('map')" id="nav-map"
+            class="flex-1 flex flex-col items-center justify-center text-gray-500 hover:text-gray-300 py-1 rounded-lg transition-colors"
+            aria-label="Planta do evento">
+            <i class="ph ph-map-trifold text-2xl mb-0.5"></i>
+            <span class="text-[10px] font-semibold">Planta</span>
+        </button>
+        <button onclick="toggleSync()" id="nav-sync"
+            class="flex-1 flex flex-col items-center justify-center text-gray-500 hover:text-gray-300 py-1 rounded-lg transition-colors"
+            aria-label="Sincronizar dados">
+            <i class="ph ph-arrow-clockwise text-2xl mb-0.5"></i>
+            <span class="text-[10px] font-semibold">Sync</span>
+        </button>
+    </nav>
+
+    <!-- Overlay do Bottom Sheet -->
+    <div id="sheet-overlay" onclick="closeSheet()" class="overlay fixed inset-0 bg-black/60 z-40 backdrop-blur-sm"></div>
+
+    <!-- Bottom Sheet (Formulário Original de Edição Subindo) -->
+    <div id="bottom-sheet" class="bottom-sheet fixed inset-x-0 bottom-0 bg-[#1c1c20] border-t border-gray-800 rounded-t-3xl z-50 flex flex-col max-h-[92vh] pb-safe shadow-2xl">
+
+        <!-- Handle -->
+        <div class="w-full flex justify-center pt-3 pb-2 cursor-pointer" onclick="closeSheet()">
+            <div class="w-12 h-1.5 bg-gray-600 rounded-full hover:bg-gray-500 transition-colors"></div>
+        </div>
+
+        <!-- Header -->
+        <div class="px-6 py-4 flex justify-between items-center border-b border-gray-800/50">
+            <div class="flex items-center gap-3">
+                <div id="sheet-status-indicator" class="w-4 h-4 rounded-full bg-green-500 shadow-[0_0_12px_rgba(34,197,94,0.5)]"></div>
+                <div>
+                    <h3 class="text-2xl font-bold text-white" id="sheet-title">Mesa 00</h3>
+                    <span id="edit-badge" class="hidden text-[10px] uppercase font-bold text-blue-400 mt-0.5">Modo Edição Ativo</span>
                 </div>
-                <button type="button" onclick="closeModal()" class="text-gray-500 hover:text-white transition-colors p-1.5 hover:bg-white/10 rounded-lg">
-                    <i class="ph ph-x text-xl"></i>
+            </div>
+            <button onclick="closeSheet()" class="w-9 h-9 flex items-center justify-center bg-gray-800 hover:bg-gray-700 text-gray-400 rounded-full active:bg-gray-600 transition-colors" aria-label="Fechar">
+                <i class="ph ph-x text-lg"></i>
+            </button>
+        </div>
+
+        <!-- Conteúdo do Formulário -->
+        <div class="p-6 overflow-y-auto no-scrollbar flex-1 flex flex-col gap-6">
+            <!-- Status e Responsável -->
+            <div class="flex flex-col gap-4">
+                <div class="flex flex-col gap-2">
+                    <label class="text-[11px] text-gray-400 font-semibold uppercase tracking-wide">Status da Mesa</label>
+                    <select id="sheet-status" class="w-full bg-[#121214] border border-gray-700 text-white text-sm rounded-xl p-3.5 focus:ring-2 focus:ring-blue-500 outline-none disabled:opacity-50 transition-all appearance-none">
+                        <option value="livre">✓ Livre</option>
+                        <option value="negociacao">◐ Em Negociação</option>
+                        <option value="reservada">◆ Reservada</option>
+                        <option value="patrocinio">★ Patrocínio</option>
+                        <option value="bloqueada">✕ Bloqueada</option>
+                    </select>
+                </div>
+                <div class="flex flex-col gap-2">
+                    <label class="text-[11px] text-gray-400 font-semibold uppercase tracking-wide">Responsável</label>
+                    <input type="text" id="sheet-identification"
+                        class="w-full bg-[#121214] border border-gray-700 text-white text-sm rounded-xl p-3.5 focus:ring-2 focus:ring-blue-500 outline-none placeholder-gray-600 transition-all"
+                        placeholder="Nome ou ID..." maxlength="50">
+                </div>
+            </div>
+
+            <!-- Financeiro (apenas admin) -->
+            <div id="financial-section" class="hidden flex-col gap-4 bg-gray-900/30 p-5 rounded-2xl border border-gray-800/50">
+                <div class="flex items-center gap-2 mb-2">
+                    <i class="ph ph-wallet text-xl text-blue-400"></i>
+                    <h4 class="text-sm font-bold text-white">Informações Financeiras</h4>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="col-span-2 flex flex-col gap-2">
+                        <label class="text-[11px] text-gray-400 font-semibold uppercase">Vendedor(a)</label>
+                        <select id="sheet-seller" onchange="toggleSellerOther()" class="w-full bg-[#121214] border border-gray-700 text-white text-sm rounded-xl p-3 outline-none disabled:opacity-50 transition-all">
+                            <option value="">— Não informado</option>
+                            <option value="MAJ Tamara">MAJ Tamara</option>
+                            <option value="SGT Ferro">SGT Ferro</option>
+                            <option value="Outros">Outros...</option>
+                        </select>
+                        <input type="text" id="sheet-seller-other"
+                            class="hidden mt-2 w-full bg-[#121214] border border-gray-700 text-white text-sm rounded-xl p-3 outline-none transition-all"
+                            placeholder="Nome do vendedor..." maxlength="50">
+                    </div>
+
+                    <div class="flex flex-col gap-2">
+                        <label class="text-[11px] text-gray-400 font-semibold uppercase">Data Venda</label>
+                        <input type="date" id="sheet-sale-date" class="w-full bg-[#121214] border border-gray-700 text-white text-sm rounded-xl p-3 outline-none transition-all">
+                    </div>
+
+                    <div class="flex flex-col gap-2">
+                        <label class="text-[11px] text-red-400 font-bold uppercase">Falta Pagar</label>
+                        <input type="text" id="sheet-missing-amount"
+                            class="w-full bg-red-500/10 border border-red-500/30 text-red-100 text-sm rounded-xl p-3 outline-none placeholder-red-900 focus:ring-2 focus:ring-red-500 transition-all"
+                            placeholder="R$ 0,00" maxlength="20">
+                    </div>
+
+                    <div class="col-span-2 flex flex-col gap-2">
+                        <label class="text-[11px] text-gray-400 font-semibold uppercase">Tipo Pagamento</label>
+                        <select id="sheet-payment-method" onchange="togglePaymentFields()" class="w-full bg-[#121214] border border-gray-700 text-white text-sm rounded-xl p-3 outline-none disabled:opacity-50 transition-all">
+                            <option value="">— Não informado</option>
+                            <option value="avista">À Vista</option>
+                            <option value="parcelado">Parcelado</option>
+                        </select>
+                    </div>
+
+                    <div id="installments-wrapper" class="hidden col-span-2 flex-col gap-4 border-t border-gray-700 pt-4 mt-2">
+                        <div class="flex flex-col gap-2">
+                            <label class="text-[11px] text-gray-400 font-semibold uppercase">Quantidade de Parcelas</label>
+                            <select id="sheet-installments-count" onchange="renderInstallmentFields()" class="w-full bg-[#121214] border border-gray-700 text-white text-sm rounded-xl p-3 outline-none disabled:opacity-50 transition-all">
+                                <option value="2">2x</option>
+                                <option value="3">3x</option>
+                                <option value="4">4x</option>
+                                <option value="5">5x</option>
+                                <option value="6">6x</option>
+                            </select>
+                        </div>
+                        <div id="installments-inputs-container" class="grid grid-cols-2 gap-3"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Convidados -->
+            <div class="flex flex-col gap-3">
+                <div class="flex items-center gap-2 mb-2">
+                    <i class="ph ph-users-three text-xl text-blue-400"></i>
+                    <h4 class="text-sm font-bold text-white">Convidados (10 lugares)</h4>
+                </div>
+                <div class="flex flex-col gap-2.5" id="sheet-guests-list"></div>
+            </div>
+            <div class="h-6"></div>
+        </div>
+
+        <!-- Footer Ações -->
+        <div class="p-4 border-t border-gray-800 bg-[#1c1c20] flex-shrink-0 flex gap-3">
+            <div id="view-actions" class="flex w-full gap-3">
+                <button onclick="showAuthModal()"
+                    class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3.5 rounded-xl text-sm font-bold active:bg-blue-800 flex justify-center items-center gap-2 transition-colors shadow-lg">
+                    <i class="ph ph-pencil-simple text-lg"></i> Editar
                 </button>
             </div>
-
-            <div class="p-5 overflow-y-auto flex-1 space-y-5">
-                
-                <div class="bg-white/[0.04] rounded-xl border border-white/[0.07] p-4 space-y-4">
-                    <div class="flex flex-col sm:flex-row gap-4">
-                        <div class="flex-1">
-                            <label class="field-label">Status da Mesa</label>
-                            <div class="custom-select-wrap" id="status-select-wrap">
-                                <div class="custom-select-btn" id="status-select-btn" onclick="toggleStatusDropdown()">
-                                    <span class="option-dot" id="status-dot" style="background:#22c55e;color:#22c55e"></span>
-                                    <span id="status-label-text">Livre</span>
-                                </div>
-                                <div class="custom-select-menu" id="status-select-menu">
-                                    <div class="custom-select-option" onclick="selectStatus('livre')"      data-value="livre">
-                                        <span class="option-dot" style="background:#22c55e;color:#22c55e"></span> Livre
-                                    </div>
-                                    <div class="custom-select-option" onclick="selectStatus('negociacao')" data-value="negociacao">
-                                        <span class="option-dot" style="background:#a855f7;color:#a855f7"></span> Em Negociação
-                                    </div>
-                                    <div class="custom-select-option" onclick="selectStatus('reservada')"  data-value="reservada">
-                                        <span class="option-dot" style="background:#f97316;color:#f97316"></span> Reservada
-                                    </div>
-                                    <div class="custom-select-option" onclick="selectStatus('patrocinio')" data-value="patrocinio">
-                                        <span class="option-dot" style="background:#06b6d4;color:#06b6d4"></span> Patrocínio
-                                    </div>
-                                    <div class="custom-select-option" onclick="selectStatus('bloqueada')"  data-value="bloqueada">
-                                        <span class="option-dot" style="background:#6b7280;color:#6b7280"></span> Bloqueada
-                                    </div>
-                                </div>
-                                <input type="hidden" id="modal-status-select" value="livre">
-                            </div>
-                        </div>
-                        <div class="flex-1">
-                            <label class="field-label">Responsável (Militar)</label>
-                            <input type="text" id="modal-identification" class="field-input" placeholder="Ex: SGT João Silva">
-                        </div>
-                    </div>
-                </div>
-
-                <div>
-                    <div class="section-label"><i class="ph ph-users text-sm"></i> Convidados <span class="text-gray-600 normal-case tracking-normal font-normal">(10 lugares)</span></div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5" id="guests-list"></div>
-                </div>
-
-                <div id="financial-section" class="hidden bg-white/[0.04] rounded-xl border border-white/[0.07] p-4">
-                    <div class="section-label"><i class="ph ph-wallet text-sm"></i> Controle Financeiro</div>
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div>
-                            <label class="field-label">Vendedor(a)</label>
-                            <select id="modal-seller" onchange="toggleSellerOther()" class="field-input">
-                                <option value="">Não informado</option>
-                                <option value="MAJ Tamara">MAJ Tamara</option>
-                                <option value="SGT Ferro">SGT Ferro</option>
-                                <option value="Outros">Outros...</option>
-                            </select>
-                            <input type="text" id="modal-seller-other" class="field-input hidden mt-2" placeholder="Nome do vendedor">
-                        </div>
-                        <div>
-                            <label class="field-label">Data da Venda</label>
-                            <input type="date" id="modal-sale-date" class="field-input">
-                        </div>
-                        <div>
-                            <label class="field-label">Forma de Pagamento</label>
-                            <select id="modal-payment-method" onchange="togglePaymentFields()" class="field-input">
-                                <option value="">Não informado</option>
-                                <option value="avista">À vista</option>
-                                <option value="parcelado">Parcelado</option>
-                            </select>
-                        </div>
-                        <div id="installments-count-wrapper" class="hidden">
-                            <label class="field-label">Nº de Parcelas</label>
-                            <select id="modal-installments-count" onchange="renderInstallmentFields()" class="field-input">
-                                <option value="2">2×</option>
-                                <option value="3">3×</option>
-                                <option value="4">4×</option>
-                                <option value="5">5×</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="field-label text-red-400">Valor Restante (Falta)</label>
-                            <input type="text" id="modal-missing-amount" class="field-input" placeholder="R$ 0,00">
-                        </div>
-                    </div>
-                    <div id="installments-inputs-container" class="hidden grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4 pt-4 border-t border-white/[0.07]"></div>
-                </div>
-            </div>
-
-            <div class="px-5 py-4 border-t border-white/[0.08] bg-white/[0.02] flex-shrink-0">
-                <div id="view-footer" class="flex justify-end gap-2">
-                    <button type="button" onclick="closeModal()" class="px-4 py-2 text-xs font-semibold text-gray-400 border border-white/10 rounded-xl hover:bg-white/5 transition-colors">Fechar</button>
-                    <button type="button" onclick="showAuthModal()" class="px-4 py-2 text-xs font-semibold text-white bg-white/10 border border-white/10 rounded-xl hover:bg-white/15 transition-colors flex items-center gap-2">
-                        <i class="ph ph-lock-key"></i> Habilitar Edição
-                    </button>
-                </div>
-                <div id="edit-footer" class="hidden justify-end gap-2 flex">
-                    <button type="button" onclick="closeModal()" class="px-4 py-2 text-xs font-semibold text-gray-400 border border-white/10 rounded-xl hover:bg-white/5 transition-colors">Cancelar</button>
-                    <button type="button" id="save-btn" onclick="saveTableData()" class="px-5 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 rounded-xl transition-colors flex items-center gap-2 shadow-lg shadow-blue-900/40">
-                        <i class="ph ph-floppy-disk"></i> Salvar Alterações
-                    </button>
-                </div>
+            <div id="edit-actions" class="hidden w-full flex gap-3">
+                <button onclick="closeSheet()"
+                    class="w-1/3 bg-[#121214] border border-gray-700 text-gray-300 hover:text-white py-3.5 rounded-xl text-sm font-bold active:bg-gray-800 transition-all">
+                    Cancelar
+                </button>
+                <button id="save-btn" onclick="saveTableData()"
+                    class="w-2/3 bg-green-600 hover:bg-green-700 text-white py-3.5 rounded-xl text-sm font-bold active:bg-green-800 flex justify-center items-center gap-2 transition-all shadow-lg">
+                    <i class="ph ph-check-circle text-lg"></i> Salvar
+                </button>
             </div>
         </div>
     </div>
 
-    <div id="toast" class="fixed bottom-5 right-5 flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl transform translate-y-20 opacity-0 transition-all duration-300 z-50 max-w-xs">
-        <i class="ph ph-check-circle text-2xl text-white"></i>
-        <span class="text-sm font-semibold text-white">Alterações salvas com sucesso!</span>
+    <!-- Toast de Sucesso -->
+    <div id="toast" class="toast fixed left-1/2 w-[90%] max-w-sm p-4 text-white bg-green-600 rounded-2xl shadow-2xl flex items-center gap-3">
+        <i class="ph ph-check-circle text-2xl flex-shrink-0"></i>
+        <div class="text-sm font-semibold">Salvo com sucesso!</div>
     </div>
 
+    <!-- Script Extra: Para centralizar o mapa automaticamente a primeira vez que abrir a aba "Planta" -->
     <script>
-    // ─────────────────────────────────────────
-    //  CONFIGURAÇÕES
-    // ─────────────────────────────────────────
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyZPP_uF5VpQWYZZDzC-mrxDhjBpGbpHO_Twt7_mnWK71-yqTA7_4N8JjH2oAX7iiLIjQ/exec";
-    const SENHA_SISTEMA = "baile2026";
-
-    const STATUS_BG = { livre: 'rgba(34,197,94,0.80)', negociacao: 'rgba(168,85,247,0.80)', reservada: 'rgba(249,115,22,0.80)', patrocinio: 'rgba(6,182,212,0.80)', bloqueada: 'rgba(107,114,128,0.75)' };
-    const STATUS_BORDER = { livre: '#4ade80', negociacao: '#c084fc', reservada: '#fb923c', patrocinio: '#22d3ee', bloqueada: '#9ca3af' };
-    const STATUS_GLOW = { livre: '0 0 12px rgba(34,197,94,0.5)', negociacao: '0 0 12px rgba(168,85,247,0.5)', reservada: '0 0 12px rgba(249,115,22,0.5)', patrocinio: '0 0 12px rgba(6,182,212,0.5)', bloqueada: '0 0 8px rgba(107,114,128,0.3)' };
-    const STATUS_GLOW_STRONG = { livre: '0 0 22px rgba(34,197,94,0.8)', negociacao: '0 0 22px rgba(168,85,247,0.8)', reservada: '0 0 22px rgba(249,115,22,0.8)', patrocinio: '0 0 22px rgba(6,182,212,0.8)', bloqueada: '0 0 14px rgba(107,114,128,0.5)' };
-    const STATUS_WAVE_COLOR = { livre: 'rgba(34,197,94,0.6)', negociacao: 'rgba(168,85,247,0.6)', reservada: 'rgba(249,115,22,0.6)', patrocinio: 'rgba(6,182,212,0.6)', bloqueada: 'rgba(107,114,128,0.4)' };
-    const MODAL_INDICATOR = { livre: '#22c55e', negociacao: '#a855f7', reservada: '#f97316', patrocinio: '#06b6d4', bloqueada: '#6b7280' };
-
-    // ─────────────────────────────────────────
-    //  LAYOUT E MATRIZ
-    // ─────────────────────────────────────────
-    const GRID_TOP    = 0.241;
-    const GRID_LEFT   = 0.250;
-    const GRID_WIDTH  = 0.480;
-    const GRID_HEIGHT = 0.485;
-    const GRID_COLS   = 12;
-    const GRID_ROWS   = 8;
-    const PIN_SIZE    = 38;
-
-    const layoutMatrix = [
-        [78, 75, 69, 63, 57, 49, 41, 33, 25, 17,  9, 1],
-        [79, 76, 70, 64, 58, 50, 42, 34, 26, 18, 10, 2],
-        [80, 77, 71, 65, 59, 51, 43, 35, 27, 19, 11, 3],
-        [ 0,  0, 72, 66, 60, 52, 44, 36, 28, 20, 12, 4],
-        [ 0,  0, 73, 67, 61, 53, 45, 37, 29, 21, 13, 5],
-        [ 0,  0, 74, 68, 62, 54, 46, 38, 30, 22, 14, 6],
-        [ 0,  0,  0,  0,  0, 55, 47, 39, 31, 23, 15, 7],
-        [ 0,  0,  0,  0,  0, 56, 48, 40, 32, 24, 16, 8],
-    ];
-
-    function cellToPercent(row, col) {
-        const cellW = GRID_WIDTH  / GRID_COLS;
-        const cellH = GRID_HEIGHT / GRID_ROWS;
-        return {
-            top:  (GRID_TOP  + cellH * row + cellH / 2) * 100,
-            left: (GRID_LEFT + cellW * col + cellW / 2) * 100,
-        };
-    }
-
-    // ─────────────────────────────────────────
-    //  ESTADOS
-    // ─────────────────────────────────────────
-    const tablesData = {};
-    let currentEditingTableId = null;
-    let isEditor = false;
-
-    function initializeData() {
-        for (let i = 1; i <= 80; i++) {
-            tablesData[`T${i}`] = {
-                id: `T${i}`, number: String(i).padStart(2, '0'), status: 'livre',
-                identification: '', paymentMethod: '', missingAmount: '',
-                installmentsCount: '2', installmentsValues: Array(5).fill(''),
-                guests: Array(10).fill(''), seller: '', sellerOther: '', saleDate: ''
-            };
-        }
-    }
-
-    // ─────────────────────────────────────────
-    //  CARREGAR / RENDERIZAR
-    // ─────────────────────────────────────────
-    async function loadDataFromSheets() {
-        const badge = document.getElementById('conn-badge');
-        const label = document.getElementById('conn-label');
-        try {
-            const res = await fetch(WEB_APP_URL);
-            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        document.addEventListener("DOMContentLoaded", () => {
+            const originalSwitchTab = window.switchTab;
+            let mapCentered = false;
             
-            const result = await res.json();
-            if (result.status === "success" && result.data) {
-                for (const [id, d] of Object.entries(result.data)) {
-                    if (tablesData[id]) Object.assign(tablesData[id], d);
+            // Intercepta o clique na aba para centralizar o mapa
+            window.switchTab = function(tabName) {
+                // Chama a função original que está no app.js
+                if (typeof originalSwitchTab === 'function') {
+                    originalSwitchTab(tabName);
                 }
-                badge.classList.add('online');
-                label.textContent = 'Google Sheets online';
-            } else {
-                throw new Error("Formato de retorno inválido");
-            }
-        } catch (e) {
-            console.error('Erro ao carregar:', e);
-            badge.classList.add('error');
-            label.textContent = 'Sem conexão';
-        } finally {
-            renderPins();
-            updateStats();
-            centerMapOnLoad(); // Centraliza o mapa
-            
-            const overlay = document.getElementById('loading-overlay');
-            overlay.classList.add('opacity-0', 'pointer-events-none');
-            setTimeout(() => overlay.remove(), 500);
-
-            // Esconde a dica flutuante de arraste após 4.5 segundos
-            setTimeout(() => {
-                const hint = document.getElementById('mobile-swipe-hint');
-                if(hint) hint.style.opacity = '0';
-            }, 4500);
-        }
-    }
-
-    // Centraliza o foco do mapa pra quem abre no celular
-    function centerMapOnLoad() {
-        const container = document.getElementById('map-container');
-        if(container) {
-            container.scrollLeft = (container.scrollWidth - container.clientWidth) / 2;
-            container.scrollTop = (container.scrollHeight - container.clientHeight) / 2;
-        }
-    }
-
-    function renderPins() {
-        const layer = document.getElementById('pins-layer');
-        let htmlBuffer = "";
-
-        layoutMatrix.forEach((row, ri) => {
-            row.forEach((num, ci) => {
-                if (num === 0) return;
-                const table = tablesData[`T${num}`];
-                if (!table) return;
-
-                const { top, left } = cellToPercent(ri, ci);
-                const idHtml = table.identification
-                    ? `<span class="pin-id">${table.identification}</span>` : '';
-
-                const statusLabel = {
-                    livre: 'Livre', negociacao: 'Em Negociação',
-                    reservada: 'Reservada', patrocinio: 'Patrocínio', bloqueada: 'Bloqueada'
-                }[table.status] || table.status;
-
-                const tooltipContent = table.identification
-                    ? `Mesa ${table.number} · ${statusLabel}<br><span style="color:#9ca3af">${table.identification}</span>`
-                    : `Mesa ${table.number} · ${statusLabel}`;
-
-                const waveDelay = ((num * 137) % 2400) / 1000;
-                const waveColor = STATUS_WAVE_COLOR[table.status];
-
-                htmlBuffer += `
-                <div class="table-pin" id="pin-${table.id}" onclick="openModal('${table.id}')"
-                    style="top: ${top}%; left: ${left}%; width: ${PIN_SIZE}px; height: ${PIN_SIZE}px;
-                           background: ${STATUS_BG[table.status]}; border-color: ${STATUS_BORDER[table.status]};
-                           --pin-glow: ${STATUS_GLOW[table.status]}; --pin-glow-strong: ${STATUS_GLOW_STRONG[table.status]};
-                           animation-delay: ${waveDelay}s; backdrop-filter: blur(2px);">
-                    <span class="wave wave-1" style="border-color:${waveColor}; animation-delay:${waveDelay}s"></span>
-                    <span class="wave wave-2" style="border-color:${waveColor}; animation-delay:${waveDelay + 0.6}s"></span>
-                    <span class="wave wave-3" style="border-color:${waveColor}; animation-delay:${waveDelay + 1.2}s"></span>
-                    <span class="pin-num">${table.number}</span>
-                    ${idHtml}
-                    <div class="pin-tooltip">${tooltipContent}</div>
-                </div>`;
-            });
+                
+                // Se clicou na planta, rola para o meio suavemente
+                if (tabName === 'map' && !mapCentered) {
+                    const mapContainer = document.querySelector('.map-wrapper');
+                    if (mapContainer) {
+                        setTimeout(() => {
+                            mapContainer.scrollTo({
+                                left: (mapContainer.scrollWidth - mapContainer.clientWidth) / 2,
+                                top: (mapContainer.scrollHeight - mapContainer.clientHeight) / 2,
+                                behavior: 'smooth'
+                            });
+                            mapCentered = true;
+                        }, 100);
+                    }
+                }
+            };
         });
-        layer.innerHTML = htmlBuffer;
-    }
-
-    function updateStats() {
-        const counts = { livre:0, negociacao:0, reservada:0, patrocinio:0, bloqueada:0 };
-        Object.values(tablesData).forEach(t => { if (counts[t.status] !== undefined) counts[t.status]++; });
-        document.getElementById('cnt-livre').textContent      = counts.livre;
-        document.getElementById('cnt-negociacao').textContent = counts.negociacao;
-        document.getElementById('cnt-reservada').textContent  = counts.reservada;
-        document.getElementById('cnt-patrocinio').textContent = counts.patrocinio;
-        document.getElementById('cnt-bloqueada').textContent  = counts.bloqueada;
-    }
-
-    // ─────────────────────────────────────────
-    //  AUTENTICAÇÃO & MODAL
-    // ─────────────────────────────────────────
-    function showAuthModal() {
-        document.getElementById('auth-modal').classList.remove('opacity-0', 'pointer-events-none');
-        document.getElementById('auth-content').classList.remove('scale-95');
-        document.getElementById('auth-password').value = '';
-        document.getElementById('auth-password').focus();
-    }
-    function closeAuthModal() {
-        document.getElementById('auth-modal').classList.add('opacity-0', 'pointer-events-none');
-        document.getElementById('auth-content').classList.add('scale-95');
-    }
-    function authenticate() {
-        const pass = document.getElementById('auth-password').value;
-        const err  = document.getElementById('auth-error');
-        if (pass === SENHA_SISTEMA) {
-            isEditor = true;
-            closeAuthModal();
-            openModal(currentEditingTableId);
-        } else {
-            err.classList.remove('hidden');
-            setTimeout(() => err.classList.add('hidden'), 3000);
-        }
-    }
-    document.getElementById('auth-password').addEventListener('keypress', e => { if (e.key === 'Enter') authenticate(); });
-
-    const STATUS_LABELS = { livre: 'Livre', negociacao: 'Em Negociação', reservada: 'Reservada', patrocinio: 'Patrocínio', bloqueada: 'Bloqueada' };
-    const STATUS_DOT_COLOR = { livre: '#22c55e', negociacao: '#a855f7', reservada: '#f97316', patrocinio: '#06b6d4', bloqueada: '#6b7280' };
-
-    function toggleStatusDropdown() {
-        const btn  = document.getElementById('status-select-btn');
-        const menu = document.getElementById('status-select-menu');
-        const isOpen = menu.classList.contains('open');
-        closeStatusDropdown();
-        if (!isOpen) { btn.classList.add('open'); menu.classList.add('open'); }
-    }
-    function closeStatusDropdown() {
-        document.getElementById('status-select-btn').classList.remove('open');
-        document.getElementById('status-select-menu').classList.remove('open');
-    }
-    function selectStatus(value) {
-        document.getElementById('modal-status-select').value = value;
-        document.getElementById('status-label-text').textContent = STATUS_LABELS[value];
-        const dot = document.getElementById('status-dot');
-        dot.style.background = STATUS_DOT_COLOR[value];
-        dot.style.color      = STATUS_DOT_COLOR[value];
-        document.querySelectorAll('#status-select-menu .custom-select-option').forEach(el => {
-            el.classList.toggle('selected', el.dataset.value === value);
-        });
-        closeStatusDropdown();
-    }
-    function setStatusDropdown(value) { selectStatus(value); }
-    document.addEventListener('click', e => {
-        if (!document.getElementById('status-select-wrap')?.contains(e.target)) closeStatusDropdown();
-    });
-
-    function toggleSellerOther() {
-        const v = document.getElementById('modal-seller').value;
-        document.getElementById('modal-seller-other').classList.toggle('hidden', v !== 'Outros');
-    }
-    function togglePaymentFields() {
-        const v = document.getElementById('modal-payment-method').value;
-        const isParceled = v === 'parcelado';
-        document.getElementById('installments-count-wrapper').classList.toggle('hidden', !isParceled);
-        document.getElementById('installments-inputs-container').classList.toggle('hidden', !isParceled);
-        if (isParceled) renderInstallmentFields();
-    }
-    function renderInstallmentFields() {
-        const count = parseInt(document.getElementById('modal-installments-count').value) || 2;
-        const container = document.getElementById('installments-inputs-container');
-        const table = tablesData[currentEditingTableId];
-        let htmlBuffer = "";
-        
-        for (let i = 0; i < count; i++) {
-            const val = table.installmentsValues[i] || '';
-            htmlBuffer += `
-                <div>
-                    <label class="field-label">Parcela ${i+1} (R$)</label>
-                    <input type="text" id="installment-val-${i}" value="${val}" placeholder="Ex: 100,00" class="field-input ${!isEditor ? 'readonly' : ''}">
-                </div>`;
-        }
-        container.innerHTML = htmlBuffer;
-    }
-
-    function openModal(tableId) {
-        currentEditingTableId = tableId;
-        const t = tablesData[tableId];
-
-        document.getElementById('modal-title').textContent = `Mesa ${t.number}`;
-        const indicator = document.getElementById('modal-status-indicator');
-        indicator.style.background = MODAL_INDICATOR[t.status];
-        indicator.style.boxShadow  = STATUS_GLOW[t.status];
-
-        document.getElementById('edit-badge').classList.toggle('hidden', !isEditor);
-        document.getElementById('financial-section').classList.toggle('hidden', !isEditor);
-
-        const setField = (id, val, type = 'input') => {
-            const el = document.getElementById(id);
-            if (!el) return;
-            el.value = val || '';
-            el.disabled = (type === 'select' && !isEditor);
-            if (type === 'input') {
-                if (!isEditor) { el.setAttribute('readonly', ''); el.classList.add('readonly'); }
-                else { el.removeAttribute('readonly'); el.classList.remove('readonly'); }
-            }
-        };
-
-        setStatusDropdown(t.status);
-        const statusBtn = document.getElementById('status-select-btn');
-        if (!isEditor) statusBtn.classList.add('disabled');
-        else statusBtn.classList.remove('disabled');
-
-        setField('modal-identification', t.identification);
-        setField('modal-seller', t.seller, 'select');
-        setField('modal-seller-other', t.sellerOther);
-        setField('modal-sale-date', t.saleDate);
-        setField('modal-payment-method', t.paymentMethod, 'select');
-        setField('modal-missing-amount', t.missingAmount);
-        setField('modal-installments-count', t.installmentsCount, 'select');
-
-        toggleSellerOther();
-        togglePaymentFields();
-
-        const gContainer = document.getElementById('guests-list');
-        let guestsHtml = "";
-        for (let i = 0; i < 10; i++) {
-            guestsHtml += `
-                <div class="relative flex items-center gap-2">
-                    <span class="text-[10px] font-bold text-gray-600 w-4 text-right flex-shrink-0">${i+1}</span>
-                    <input type="text" id="guest-${i}" value="${t.guests[i]}"
-                        placeholder="${isEditor ? 'Nome do convidado...' : '— Vazio —'}"
-                        class="field-input flex-1 ${!isEditor ? 'readonly' : ''}"
-                        ${!isEditor ? 'readonly' : ''}>
-                </div>`;
-        }
-        gContainer.innerHTML = guestsHtml;
-
-        document.getElementById('view-footer').classList.toggle('hidden',  isEditor);
-        document.getElementById('edit-footer').classList.toggle('hidden', !isEditor);
-        document.getElementById('edit-footer').classList.toggle('flex',    isEditor);
-
-        const modal   = document.getElementById('table-modal');
-        const content = document.getElementById('modal-content');
-        modal.classList.remove('opacity-0', 'pointer-events-none');
-        content.classList.remove('scale-95');
-    }
-
-    function closeModal() {
-        document.getElementById('table-modal').classList.add('opacity-0', 'pointer-events-none');
-        document.getElementById('modal-content').classList.add('scale-95');
-        currentEditingTableId = null;
-    }
-
-    document.getElementById('table-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
-
-    // ─────────────────────────────────────────
-    //  SALVAR
-    // ─────────────────────────────────────────
-    async function saveTableData() {
-        if (!currentEditingTableId || !isEditor) return;
-        const t = tablesData[currentEditingTableId];
-
-        t.status          = document.getElementById('modal-status-select').value;
-        t.identification  = document.getElementById('modal-identification').value.trim();
-        t.seller          = document.getElementById('modal-seller').value;
-        t.sellerOther     = document.getElementById('modal-seller-other').value.trim();
-        t.saleDate        = document.getElementById('modal-sale-date').value;
-        t.paymentMethod   = document.getElementById('modal-payment-method').value;
-        t.missingAmount   = document.getElementById('modal-missing-amount').value.trim();
-        t.installmentsCount = document.getElementById('modal-installments-count').value;
-
-        for (let i = 0; i < 10; i++) {
-            t.guests[i] = (document.getElementById(`guest-${i}`)?.value || '').trim();
-        }
-
-        t.installmentsValues = Array(5).fill('');
-        if (t.paymentMethod === 'parcelado') {
-            const count = parseInt(t.installmentsCount);
-            for (let i = 0; i < count; i++) {
-                const el = document.getElementById(`installment-val-${i}`);
-                if (el) t.installmentsValues[i] = el.value.trim();
-            }
-        }
-
-        const btn = document.getElementById('save-btn');
-        btn.innerHTML = '<i class="ph ph-spinner animate-spin"></i> Salvando...';
-        btn.disabled = true;
-
-        try {
-            const response = await fetch(WEB_APP_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify(t)
-            });
-            
-            if (!response.ok) throw new Error("Erro na comunicação com o servidor.");
-
-            renderPins();
-            updateStats();
-            closeModal();
-            showToast();
-        } catch (e) {
-            console.error('Erro ao salvar:', e);
-            alert('Erro ao salvar na planilha. Verifique sua conexão.');
-        } finally {
-            btn.innerHTML = '<i class="ph ph-floppy-disk"></i> Salvar Alterações';
-            btn.disabled = false;
-        }
-    }
-
-    function showToast() {
-        const toast = document.getElementById('toast');
-        toast.classList.remove('translate-y-20', 'opacity-0');
-        setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 3000);
-    }
-
-    // ─────────────────────────────────────────
-    //  INIT
-    // ─────────────────────────────────────────
-    initializeData();
-    loadDataFromSheets();
     </script>
+
+    <!-- Script Principal (MANTIDO INTACTO!) -->
+    <script src="app.js" defer></script>
 </body>
 </html>
