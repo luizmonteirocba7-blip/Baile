@@ -280,7 +280,7 @@
 
         <!-- Aba: Lista -->
         <div id="tab-list" class="absolute inset-0 overflow-y-auto no-scrollbar p-4 flex flex-col gap-4 bg-[#121214] animate-fade-in">
-            <div class="relative sticky top-0 bg-[#121214] z-5 pb-2">
+            <div class="relative sticky top-0 bg-[#121214] z-10 pb-2">
                 <i class="ph ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg pointer-events-none"></i>
                 <input
                     type="text"
@@ -474,7 +474,7 @@
                         </select>
                     </div>
 
-                    <div id="installments-wrapper" class="hidden col-span-2 flex flex-col gap-4 border-t border-gray-700 pt-4 mt-2">
+                    <div id="installments-wrapper" class="hidden col-span-2 flex-col gap-4 border-t border-gray-700 pt-4 mt-2">
                         <div class="flex flex-col gap-2">
                             <label class="text-[11px] text-gray-400 font-semibold uppercase">Quantidade de Parcelas</label>
                             <select id="sheet-installments-count" onchange="renderInstallmentFields()" class="w-full bg-[#121214] border border-gray-700 text-white text-sm rounded-xl p-3 outline-none disabled:opacity-50 transition-all">
@@ -510,7 +510,7 @@
                     <i class="ph ph-pencil-simple text-lg"></i> Editar
                 </button>
             </div>
-            <div id="edit-actions" class="hidden w-full gap-3">
+            <div id="edit-actions" class="hidden w-full flex gap-3">
                 <button onclick="closeSheet()"
                     class="w-1/3 bg-[#121214] border border-gray-700 text-gray-300 hover:text-white py-3.5 rounded-xl text-sm font-bold active:bg-gray-800 transition-all">
                     Cancelar
