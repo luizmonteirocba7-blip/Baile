@@ -69,7 +69,7 @@ const API = {
             return await response.json();
         } catch (error) {
             console.error('Erro na API:', error);
-            showToast('Erro ao conectar ao servidor', 'error');
+            showToast('Conexão instável. Usando dados locais.', 'warning');
             return null;
         }
     },
@@ -175,6 +175,9 @@ const Render = {
     map() {
         const sectorA = document.getElementById('sector-a');
         const sectorB = document.getElementById('sector-b');
+        
+        if(!sectorA || !sectorB) return; // Evita erro se elementos não existirem
+        
         sectorA.innerHTML = '';
         sectorB.innerHTML = '';
 
@@ -186,7 +189,10 @@ const Render = {
     },
 
     createTablePin(table) {
-        const config = STATUS_CONFIG[table.status];
+        // CORREÇÃO: Fallback caso a planilha venha com status estranho. (Evita crash total)
+        let statusKey = table.status ? table.status.toLowerCase() : 'livre';
+        const config = STATUS_CONFIG[statusKey] || STATUS_CONFIG['livre']; 
+        
         const label = table.identification
             ? `<span class="text-[8px] font-medium leading-tight mt-0.5 max-w-[40px] truncate text-center text-white/90">${table.identification}</span>`
             : '';
@@ -202,13 +208,16 @@ const Render = {
 
     list(searchText = '') {
         const container = document.getElementById('list-container');
+        if(!container) return;
+
         const lowerSearch = searchText.toLowerCase();
         const sorted = Object.values(State.tables).sort((a, b) => a.number - b.number);
 
         const filtered = sorted.filter(table => {
             if (!searchText) return true;
-            return table.number.toString().includes(lowerSearch) ||
-                   table.identification.toLowerCase().includes(lowerSearch);
+            // CORREÇÃO: Garantir que identification seja uma string antes do toLowerCase
+            const ident = table.identification ? String(table.identification).toLowerCase() : '';
+            return table.number.toString().includes(lowerSearch) || ident.includes(lowerSearch);
         });
 
         if (filtered.length === 0) {
@@ -220,7 +229,10 @@ const Render = {
     },
 
     createListCard(table) {
-        const config = STATUS_CONFIG[table.status];
+        // CORREÇÃO: Fallback status
+        let statusKey = table.status ? table.status.toLowerCase() : 'livre';
+        const config = STATUS_CONFIG[statusKey] || STATUS_CONFIG['livre'];
+        
         const name = table.identification || 'Sem responsável';
 
         return `
@@ -283,6 +295,8 @@ const Auth = {
     updateUI() {
         const btnUnlock = document.getElementById('btn-unlock');
         const badgeUnlocked = document.getElementById('badge-unlocked');
+        
+        if(!btnUnlock || !badgeUnlocked) return;
 
         if (State.isEditor) {
             btnUnlock.classList.add('hidden');
@@ -323,13 +337,19 @@ const Sheet = {
     },
 
     updateHeader(table) {
-        const config = STATUS_CONFIG[table.status];
+        let statusKey = table.status ? table.status.toLowerCase() : 'livre';
+        const config = STATUS_CONFIG[statusKey] || STATUS_CONFIG['livre'];
+        
         document.getElementById('sheet-title').textContent = `Mesa ${table.number}`;
         document.getElementById('sheet-status-indicator').className = `w-4 h-4 rounded-full shadow-[0_0_12px_rgba(34,197,94,0.5)] ${config.color}`;
     },
 
     fillForm(table) {
-        document.getElementById('sheet-status').value = table.status;
+        let statusKey = table.status ? table.status.toLowerCase() : 'livre';
+        // Ajusta se não for um status válido
+        if(!STATUS_CONFIG[statusKey]) statusKey = 'livre';
+        
+        document.getElementById('sheet-status').value = statusKey;
         document.getElementById('sheet-identification').value = table.identification || '';
 
         document.getElementById('sheet-seller').value = table.seller || '';
@@ -374,18 +394,21 @@ const Sheet = {
     setFieldsDisabled(disabled) {
         const mainFields = ['sheet-status', 'sheet-identification', 'sheet-seller', 'sheet-sale-date', 'sheet-payment-method', 'sheet-missing-amount', 'sheet-installments-count'];
         mainFields.forEach(id => {
-            document.getElementById(id).disabled = disabled;
+            const el = document.getElementById(id);
+            if(el) el.disabled = disabled;
         });
 
         const textFields = ['sheet-identification', 'sheet-seller-other', 'sheet-missing-amount', 'sheet-sale-date'];
         textFields.forEach(id => {
             const el = document.getElementById(id);
-            if (disabled) {
-                el.setAttribute('readonly', 'true');
-                el.classList.add('bg-transparent', 'border-transparent', 'px-0');
-            } else {
-                el.removeAttribute('readonly');
-                el.classList.remove('bg-transparent', 'border-transparent', 'px-0');
+            if(el) {
+                if (disabled) {
+                    el.setAttribute('readonly', 'true');
+                    el.classList.add('bg-transparent', 'border-transparent', 'px-0');
+                } else {
+                    el.removeAttribute('readonly');
+                    el.classList.remove('bg-transparent', 'border-transparent', 'px-0');
+                }
             }
         });
     },
@@ -395,6 +418,8 @@ const Sheet = {
         const financialSection = document.getElementById('financial-section');
         const viewActions = document.getElementById('view-actions');
         const editActions = document.getElementById('edit-actions');
+
+        if(!editBadge || !financialSection) return;
 
         if (State.isEditor) {
             editBadge.classList.remove('hidden');
@@ -563,53 +588,25 @@ const Nav = {
 // ============================================
 // FUNÇÕES GLOBAIS
 // ============================================
-function switchTab(tabName) {
-    Nav.switchTab(tabName);
-}
-
-function openSheet(tableId) {
-    Sheet.open(tableId);
-}
-
-function closeSheet() {
-    Sheet.close();
-}
-
-function showAuthModal() {
-    Auth.showModal();
-}
-
-function closeAuthModal() {
-    Auth.closeModal();
-}
-
-function authenticate() {
+window.switchTab = function(tabName) { Nav.switchTab(tabName); }
+window.openSheet = function(tableId) { Sheet.open(tableId); }
+window.closeSheet = function() { Sheet.close(); }
+window.showAuthModal = function() { Auth.showModal(); }
+window.closeAuthModal = function() { Auth.closeModal(); }
+window.authenticate = function() {
     const password = document.getElementById('auth-password').value;
     Auth.authenticate(password);
 }
-
-function saveTableData() {
-    Save.tableData();
-}
-
-function filterList() {
+window.saveTableData = function() { Save.tableData(); }
+window.filterList = function() {
     const searchText = document.getElementById('search-input').value;
     Render.list(searchText);
 }
+window.toggleSellerOther = function() { Sheet.toggleSellerOther(); }
+window.togglePaymentFields = function() { Sheet.togglePaymentFields(); }
+window.renderInstallmentFields = function() { Sheet.renderInstallmentFields(); }
 
-function toggleSellerOther() {
-    Sheet.toggleSellerOther();
-}
-
-function togglePaymentFields() {
-    Sheet.togglePaymentFields();
-}
-
-function renderInstallmentFields() {
-    Sheet.renderInstallmentFields();
-}
-
-async function toggleSync() {
+window.toggleSync = async function() {
     if (State.isSyncing) return;
 
     State.isSyncing = true;
@@ -659,23 +656,32 @@ async function initApp() {
     try {
         State.init();
         Initialize.createTables();
+        
+        // Se a chamada do servidor falhar, o código agora sabe lidar!
         await Initialize.mergeWithServerData();
+        
         Render.all();
         Auth.updateUI();
-
-        const loader = document.getElementById('loading-overlay');
-        loader.classList.add('opacity-0', 'pointer-events-none');
-        setTimeout(() => loader.remove(), 500);
-
-        setInterval(async () => {
-            await Initialize.mergeWithServerData();
-            Render.all();
-        }, CONFIG.syncInterval);
-
     } catch (error) {
         console.error('Erro ao inicializar:', error);
-        showToast('Erro ao carregar aplicação', 'error');
+        showToast('Erro de conexão ao Google.', 'error');
+        Render.all(); // Renderiza mesmo com erro (mostra as mesas vazias locais em vez de travar)
+    } finally {
+        // CORREÇÃO CRÍTICA: Ocultar loading independente de erro ou sucesso
+        const loader = document.getElementById('loading-overlay');
+        if (loader) {
+            loader.classList.add('opacity-0', 'pointer-events-none');
+            setTimeout(() => loader.remove(), 500);
+        }
     }
+
+    // Intervalo mantido
+    setInterval(async () => {
+        try {
+            await Initialize.mergeWithServerData();
+            Render.all();
+        } catch(e) {}
+    }, CONFIG.syncInterval);
 }
 
 if (document.readyState === 'loading') {
