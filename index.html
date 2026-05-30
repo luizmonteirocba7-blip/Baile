@@ -50,7 +50,7 @@
             animation: spin-reverse 3s linear infinite;
         }
 
-        /* ── Animações Premium dos Pinos (Ondas e Pulso) ── */
+        /* ── Animações Premium dos Pinos ── */
         @keyframes ripple-wave { 0% { transform: translate(-50%, -50%) scale(1); opacity: 0.55; } 100% { transform: translate(-50%, -50%) scale(2.6); opacity: 0; } }
         @keyframes ripple-wave2 { 0% { transform: translate(-50%, -50%) scale(1); opacity: 0.40; } 100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; } }
         @keyframes ripple-wave3 { 0% { transform: translate(-50%, -50%) scale(1); opacity: 0.25; } 100% { transform: translate(-50%, -50%) scale(1.8); opacity: 0; } }
@@ -108,17 +108,26 @@
             z-index: 2;
         }
 
-        /* ── Área do Mapa (Estilo App Nativo) ── */
+        /* ── Área do Mapa e Sistema de Zoom ── */
         .map-wrapper {
             overflow: auto;
             -webkit-overflow-scrolling: touch;
             overscroll-behavior: none;
-            scrollbar-width: none; /* Firefox */
-            -ms-overflow-style: none; /* IE/Edge */
+            scrollbar-width: none; 
+            -ms-overflow-style: none; 
         }
         .map-wrapper::-webkit-scrollbar { display: none; }
 
-        /* ── Outros Componentes (Sheet, Toast, Banner) ── */
+        #zoom-wrapper {
+            transition: width 0.15s ease-out, height 0.15s ease-out;
+        }
+        #zoom-target {
+            transform-origin: top left;
+            transition: transform 0.15s ease-out;
+            will-change: transform;
+        }
+
+        /* ── Outros Componentes ── */
         .bottom-sheet {
             transform: translateY(100%);
             transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
@@ -162,9 +171,6 @@
 </head>
 <body class="h-screen w-screen flex flex-col overflow-hidden bg-[#121214]">
 
-    <!-- ========================================== -->
-    <!-- TELA DE LOADING MODERNA E PREMIUM          -->
-    <!-- ========================================== -->
     <div id="loading-overlay" class="fixed inset-0 z-[100] flex flex-col items-center justify-center transition-opacity duration-500 bg-[#0a0c13]/95 backdrop-blur-md">
         <div class="relative flex items-center justify-center mb-8">
             <div class="absolute w-28 h-28 border-t-2 border-b-2 border-blue-500/60 rounded-full animate-[spin_2s_linear_infinite]"></div>
@@ -179,7 +185,6 @@
         <p class="text-gray-500 text-[10px] mt-2.5 uppercase tracking-widest animate-pulse">Preparando o Salão...</p>
     </div>
 
-    <!-- Modal de Senha Original -->
     <div id="auth-modal" class="overlay fixed inset-0 z-[200] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
         <div class="bg-gray-900 p-8 rounded-3xl shadow-2xl w-full max-w-sm border border-gray-800 text-center" id="auth-content">
             <div class="w-16 h-16 bg-blue-500/20 border border-blue-500/30 rounded-2xl flex items-center justify-center mx-auto mb-6">
@@ -187,15 +192,16 @@
             </div>
             <h2 class="text-2xl font-bold text-white mb-2">Acesso Restrito</h2>
             <p class="text-gray-400 text-sm mb-8">Digite a senha para gerenciar as mesas.</p>
+            
             <input
                 type="password"
                 id="auth-password"
-                inputmode="numeric"
                 maxlength="12"
                 onkeydown="if(event.key==='Enter') authenticate()"
                 class="w-full bg-gray-800 border border-gray-700 text-white rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent block p-4 outline-none text-center text-lg tracking-widest transition-all mb-2"
                 placeholder="••••••••"
                 aria-label="Senha de acesso">
+                
             <p id="auth-error" class="text-red-400 text-sm font-medium hidden mb-4">Senha incorreta. Tente novamente.</p>
             <div class="flex gap-3 mt-4">
                 <button onclick="closeAuthModal()" class="flex-1 py-3 text-sm font-semibold text-gray-300 bg-gray-800 rounded-xl hover:bg-gray-700 transition-colors active:bg-gray-600">
@@ -208,7 +214,6 @@
         </div>
     </div>
 
-    <!-- BANNER DE INSTALAÇÃO - Android (Topo) -->
     <div id="install-banner" class="install-banner fixed left-4 right-4 z-[90] shadow-2xl top-4 pt-safe">
         <div class="bg-gradient-to-r from-[#1c1c20] to-[#25252b] border border-blue-500/40 rounded-2xl p-4 flex items-center gap-3 shadow-[0_8px_32px_rgba(59,130,246,0.25)]">
             <img src="icon-192.png" alt="Ícone" class="w-12 h-12 rounded-xl flex-shrink-0 shadow-md">
@@ -230,7 +235,6 @@
         </div>
     </div>
 
-    <!-- Cabeçalho Principal (Original) -->
     <header class="bg-[#1c1c20] pt-safe px-4 pb-3 border-b border-gray-800 z-10 flex-shrink-0 shadow-lg mt-14">
         <div class="flex justify-between items-center mt-2">
             <div class="flex items-center gap-3">
@@ -254,7 +258,6 @@
             </div>
         </div>
 
-        <!-- Legenda -->
         <div class="flex overflow-x-auto no-scrollbar gap-2 mt-4 pb-1">
             <div class="flex-shrink-0 flex items-center gap-1.5 bg-gray-800/50 px-3 py-1.5 rounded-full border border-gray-700 text-[11px] whitespace-nowrap">
                 <div class="w-2.5 h-2.5 rounded-full bg-green-500"></div> Livre
@@ -274,12 +277,8 @@
         </div>
     </header>
 
-    <!-- ÁREA PRINCIPAL -->
     <main class="flex-1 relative overflow-hidden flex flex-col">
 
-        <!-- ========================================== -->
-        <!-- ABA: LISTA (MANTIDA ORIGINALMENTE)         -->
-        <!-- ========================================== -->
         <div id="tab-list" class="absolute inset-0 overflow-y-auto no-scrollbar p-4 flex flex-col gap-4 bg-[#121214] animate-fade-in">
             <div class="relative sticky top-0 bg-[#121214] z-10 pb-2">
                 <i class="ph ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg pointer-events-none"></i>
@@ -292,46 +291,52 @@
                     aria-label="Buscar mesas">
             </div>
             <div id="list-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-24">
-                <!-- Populado via JavaScript -->
-            </div>
+                </div>
         </div>
 
-        <!-- ========================================== -->
-        <!-- ABA: MAPA (MODERNO E FLUIDO)               -->
-        <!-- ========================================== -->
         <div id="tab-map" class="absolute inset-0 hidden overflow-hidden bg-[#111113]">
             
-            <!-- Aviso flutuante para arrastar -->
             <div class="absolute top-4 left-1/2 -translate-x-1/2 z-20 bg-black/60 backdrop-blur-md px-4 py-2 rounded-full text-white text-[11px] flex items-center gap-2 pointer-events-none shadow-lg animate-pulse">
                 <i class="ph ph-hand-swipe-left text-lg"></i>
-                <span>Arraste para navegar na planta</span>
+                <span>Faça pinça para Zoom</span>
             </div>
 
-            <!-- Wrapper para rolagem de toque no estilo de app -->
-            <div class="map-wrapper w-full h-full pb-20"> <!-- pb-20 para não sobrepor na barra de navegação inferior -->
-                <!-- Container da imagem 1414x1000 exata como configurada -->
-                <div class="relative mx-auto" style="width:1414px; height:1000px; max-width: none;">
+            <div class="absolute bottom-24 right-4 z-30 flex flex-col gap-2">
+                <button onclick="changeZoom(0.2)" class="w-10 h-10 bg-gray-800/90 backdrop-blur border border-gray-600 rounded-full text-white flex items-center justify-center shadow-xl active:scale-95 transition-transform" aria-label="Aumentar Zoom">
+                    <i class="ph ph-magnifying-glass-plus text-xl"></i>
+                </button>
+                <button onclick="changeZoom(-0.2)" class="w-10 h-10 bg-gray-800/90 backdrop-blur border border-gray-600 rounded-full text-white flex items-center justify-center shadow-xl active:scale-95 transition-transform" aria-label="Diminuir Zoom">
+                    <i class="ph ph-magnifying-glass-minus text-xl"></i>
+                </button>
+                <button onclick="fitZoom()" class="w-10 h-10 bg-blue-600/90 backdrop-blur border border-blue-500 rounded-full text-white flex items-center justify-center shadow-xl active:scale-95 transition-transform" aria-label="Ver tudo">
+                    <i class="ph ph-corners-out text-xl"></i>
+                </button>
+            </div>
+
+            <div class="map-wrapper w-full h-full pb-20 pt-4" id="map-container"> 
+                
+                <div id="zoom-wrapper" style="width: 1414px; height: 1000px; margin: 0 auto;">
                     
-                    <!-- AQUI ESTÁ A CORREÇÃO DA IMAGEM DO GOOGLE DRIVE -->
-                    <img src="https://drive.google.com/thumbnail?id=1XA47nT-LdQx1V9zhwsqit7Fx-emr-j59&sz=w2500" 
-                         alt="Planta Arquitetônica"
-                         class="absolute inset-0 w-full h-full object-contain pointer-events-none z-0"
-                         onerror="this.style.display='none'; document.getElementById('map-fallback').style.display='flex';">
-                    
-                    <!-- Fallback se a imagem der erro -->
-                    <div id="map-fallback" class="hidden absolute inset-0 bg-gray-900 border border-gray-700 items-center justify-center flex-col gap-3 p-8 text-center rounded-2xl m-4">
-                        <i class="ph ph-image-broken text-5xl text-gray-600"></i>
-                        <p class="text-gray-400 text-sm font-medium">Não foi possível carregar a imagem do Drive.</p>
+                    <div id="zoom-target" class="relative" style="width:1414px; height:1000px;">
+                        
+                        <img src="https://drive.google.com/thumbnail?id=1XA47nT-LdQx1V9zhwsqit7Fx-emr-j59&sz=w2500" 
+                             alt="Planta Arquitetônica"
+                             class="absolute inset-0 w-full h-full object-contain pointer-events-none z-0"
+                             onerror="this.style.display='none'; document.getElementById('map-fallback').style.display='flex';">
+                        
+                        <div id="map-fallback" class="hidden absolute inset-0 bg-gray-900 border border-gray-700 items-center justify-center flex-col gap-3 p-8 text-center rounded-2xl m-4">
+                            <i class="ph ph-image-broken text-5xl text-gray-600"></i>
+                            <p class="text-gray-400 text-sm font-medium">Não foi possível carregar a imagem do Drive.</p>
+                        </div>
+
+                        <div id="pins-layer" class="absolute inset-0 z-10"></div>
                     </div>
 
-                    <!-- Aqui é onde o app.js vai injetar os pinos automaticamente! -->
-                    <div id="pins-layer" class="absolute inset-0 z-10"></div>
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- Navegação Inferior (Original) -->
     <nav class="bg-[#1c1c20] border-t border-gray-800 flex justify-around pb-safe pt-2 px-2 z-20 absolute bottom-0 w-full h-[62px] shadow-2xl">
         <button onclick="switchTab('list')" id="nav-list"
             class="flex-1 flex flex-col items-center justify-center text-blue-500 py-1 rounded-lg transition-colors"
@@ -353,18 +358,14 @@
         </button>
     </nav>
 
-    <!-- Overlay do Bottom Sheet -->
     <div id="sheet-overlay" onclick="closeSheet()" class="overlay fixed inset-0 bg-black/60 z-40 backdrop-blur-sm"></div>
 
-    <!-- Bottom Sheet (Formulário Original de Edição Subindo) -->
     <div id="bottom-sheet" class="bottom-sheet fixed inset-x-0 bottom-0 bg-[#1c1c20] border-t border-gray-800 rounded-t-3xl z-50 flex flex-col max-h-[92vh] pb-safe shadow-2xl">
 
-        <!-- Handle -->
         <div class="w-full flex justify-center pt-3 pb-2 cursor-pointer" onclick="closeSheet()">
             <div class="w-12 h-1.5 bg-gray-600 rounded-full hover:bg-gray-500 transition-colors"></div>
         </div>
 
-        <!-- Header -->
         <div class="px-6 py-4 flex justify-between items-center border-b border-gray-800/50">
             <div class="flex items-center gap-3">
                 <div id="sheet-status-indicator" class="w-4 h-4 rounded-full bg-green-500 shadow-[0_0_12px_rgba(34,197,94,0.5)]"></div>
@@ -378,9 +379,7 @@
             </button>
         </div>
 
-        <!-- Conteúdo do Formulário -->
         <div class="p-6 overflow-y-auto no-scrollbar flex-1 flex flex-col gap-6">
-            <!-- Status e Responsável -->
             <div class="flex flex-col gap-4">
                 <div class="flex flex-col gap-2">
                     <label class="text-[11px] text-gray-400 font-semibold uppercase tracking-wide">Status da Mesa</label>
@@ -400,13 +399,11 @@
                 </div>
             </div>
 
-            <!-- Financeiro (apenas admin) -->
             <div id="financial-section" class="hidden flex-col gap-4 bg-gray-900/30 p-5 rounded-2xl border border-gray-800/50">
                 <div class="flex items-center gap-2 mb-2">
                     <i class="ph ph-wallet text-xl text-blue-400"></i>
                     <h4 class="text-sm font-bold text-white">Informações Financeiras</h4>
                 </div>
-
                 <div class="grid grid-cols-2 gap-4">
                     <div class="col-span-2 flex flex-col gap-2">
                         <label class="text-[11px] text-gray-400 font-semibold uppercase">Vendedor(a)</label>
@@ -420,19 +417,16 @@
                             class="hidden mt-2 w-full bg-[#121214] border border-gray-700 text-white text-sm rounded-xl p-3 outline-none transition-all"
                             placeholder="Nome do vendedor..." maxlength="50">
                     </div>
-
                     <div class="flex flex-col gap-2">
                         <label class="text-[11px] text-gray-400 font-semibold uppercase">Data Venda</label>
                         <input type="date" id="sheet-sale-date" class="w-full bg-[#121214] border border-gray-700 text-white text-sm rounded-xl p-3 outline-none transition-all">
                     </div>
-
                     <div class="flex flex-col gap-2">
                         <label class="text-[11px] text-red-400 font-bold uppercase">Falta Pagar</label>
                         <input type="text" id="sheet-missing-amount"
                             class="w-full bg-red-500/10 border border-red-500/30 text-red-100 text-sm rounded-xl p-3 outline-none placeholder-red-900 focus:ring-2 focus:ring-red-500 transition-all"
                             placeholder="R$ 0,00" maxlength="20">
                     </div>
-
                     <div class="col-span-2 flex flex-col gap-2">
                         <label class="text-[11px] text-gray-400 font-semibold uppercase">Tipo Pagamento</label>
                         <select id="sheet-payment-method" onchange="togglePaymentFields()" class="w-full bg-[#121214] border border-gray-700 text-white text-sm rounded-xl p-3 outline-none disabled:opacity-50 transition-all">
@@ -441,7 +435,6 @@
                             <option value="parcelado">Parcelado</option>
                         </select>
                     </div>
-
                     <div id="installments-wrapper" class="hidden col-span-2 flex-col gap-4 border-t border-gray-700 pt-4 mt-2">
                         <div class="flex flex-col gap-2">
                             <label class="text-[11px] text-gray-400 font-semibold uppercase">Quantidade de Parcelas</label>
@@ -458,7 +451,6 @@
                 </div>
             </div>
 
-            <!-- Convidados -->
             <div class="flex flex-col gap-3">
                 <div class="flex items-center gap-2 mb-2">
                     <i class="ph ph-users-three text-xl text-blue-400"></i>
@@ -469,7 +461,6 @@
             <div class="h-6"></div>
         </div>
 
-        <!-- Footer Ações -->
         <div class="p-4 border-t border-gray-800 bg-[#1c1c20] flex-shrink-0 flex gap-3">
             <div id="view-actions" class="flex w-full gap-3">
                 <button onclick="showAuthModal()"
@@ -490,44 +481,108 @@
         </div>
     </div>
 
-    <!-- Toast de Sucesso -->
     <div id="toast" class="toast fixed left-1/2 w-[90%] max-w-sm p-4 text-white bg-green-600 rounded-2xl shadow-2xl flex items-center gap-3">
         <i class="ph ph-check-circle text-2xl flex-shrink-0"></i>
         <div class="text-sm font-semibold">Salvo com sucesso!</div>
     </div>
 
-    <!-- Script Extra: Para centralizar o mapa automaticamente a primeira vez que abrir a aba "Planta" -->
     <script>
+        let mapCentered = false;
+        let currentZoom = 1;
+        const BASE_MAP_WIDTH = 1414;
+        const BASE_MAP_HEIGHT = 1000;
+
+        function changeZoom(delta) {
+            currentZoom += delta;
+            if (currentZoom > 2.5) currentZoom = 2.5;
+            if (currentZoom < 0.25) currentZoom = 0.25;
+            applyZoom();
+        }
+
+        function fitZoom() {
+            const container = document.getElementById('map-container');
+            if(!container) return;
+            
+            const fitScale = (container.clientWidth - 16) / BASE_MAP_WIDTH;
+            currentZoom = fitScale > 2.5 ? 2.5 : (fitScale < 0.25 ? 0.25 : fitScale);
+            applyZoom();
+
+            setTimeout(() => {
+                container.scrollTo({
+                    left: (container.scrollWidth - container.clientWidth) / 2,
+                    top: (container.scrollHeight - container.clientHeight) / 2,
+                    behavior: 'smooth'
+                });
+            }, 100);
+        }
+
+        function applyZoom() {
+            const target = document.getElementById('zoom-target');
+            const wrapper = document.getElementById('zoom-wrapper');
+            if(!target || !wrapper) return;
+            
+            target.style.transform = `scale(${currentZoom})`;
+            
+            wrapper.style.width = `${BASE_MAP_WIDTH * currentZoom}px`;
+            wrapper.style.height = `${BASE_MAP_HEIGHT * currentZoom}px`;
+        }
+
         document.addEventListener("DOMContentLoaded", () => {
             const originalSwitchTab = window.switchTab;
-            let mapCentered = false;
             
-            // Intercepta o clique na aba para centralizar o mapa
             window.switchTab = function(tabName) {
-                // Chama a função original que está no app.js
                 if (typeof originalSwitchTab === 'function') {
                     originalSwitchTab(tabName);
                 }
                 
-                // Se clicou na planta, rola para o meio suavemente
                 if (tabName === 'map' && !mapCentered) {
-                    const mapContainer = document.querySelector('.map-wrapper');
-                    if (mapContainer) {
-                        setTimeout(() => {
-                            mapContainer.scrollTo({
-                                left: (mapContainer.scrollWidth - mapContainer.clientWidth) / 2,
-                                top: (mapContainer.scrollHeight - mapContainer.clientHeight) / 2,
-                                behavior: 'smooth'
-                            });
-                            mapCentered = true;
-                        }, 100);
-                    }
+                    setTimeout(fitZoom, 50);
+                    mapCentered = true;
                 }
             };
+
+            const mapContainer = document.getElementById('map-container');
+            let initialDistance = null;
+            let initialZoom = 1;
+
+            if(mapContainer) {
+                mapContainer.addEventListener('touchstart', (e) => {
+                    if (e.touches.length === 2) {
+                        e.preventDefault();
+                        const t1 = e.touches[0];
+                        const t2 = e.touches[1];
+                        initialDistance = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+                        initialZoom = currentZoom;
+                    }
+                }, { passive: false });
+
+                mapContainer.addEventListener('touchmove', (e) => {
+                    if (e.touches.length === 2) {
+                        e.preventDefault();
+                        const t1 = e.touches[0];
+                        const t2 = e.touches[1];
+                        const currentDistance = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+                        
+                        if (initialDistance) {
+                            const scale = currentDistance / initialDistance;
+                            let newZoom = initialZoom * scale;
+                            if (newZoom > 2.5) newZoom = 2.5;
+                            if (newZoom < 0.25) newZoom = 0.25;
+                            currentZoom = newZoom;
+                            applyZoom();
+                        }
+                    }
+                }, { passive: false });
+
+                mapContainer.addEventListener('touchend', (e) => {
+                    if (e.touches.length < 2) {
+                        initialDistance = null;
+                    }
+                });
+            }
         });
     </script>
 
-    <!-- Script Principal -->
     <script src="app.js" defer></script>
 </body>
 </html>
