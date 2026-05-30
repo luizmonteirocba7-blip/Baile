@@ -13,8 +13,9 @@
     <title>Baile Dom Pedro II - Gestão 2026</title>
 
     <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/png" href="assets/icon-192.png">
-    <link rel="apple-touch-icon" href="assets/icon-192.png">
+    <!-- CORREÇÃO 2: Removido o 'assets/' para puxar da raiz conforme o seu GitHub -->
+    <link rel="icon" type="image/png" href="icon-192.png">
+    <link rel="apple-touch-icon" href="icon-192.png">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -140,9 +141,11 @@
 <body class="h-screen w-screen flex flex-col overflow-hidden bg-[#121214]">
 
     <!-- Loading Overlay -->
+    <!-- NOTA: Seu app.js DEVE ter um código que esconde esta div, senão o app não aparece -->
     <div id="loading-overlay" class="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#121214] transition-opacity duration-500">
         <div class="flex flex-col items-center gap-4">
-            <img src="assets/icon-192.png" alt="Baile" class="w-16 h-16 rounded-2xl shadow-xl mb-2 animate-pulse">
+            <!-- CORREÇÃO 2 -->
+            <img src="icon-192.png" alt="Baile" class="w-16 h-16 rounded-2xl shadow-xl mb-2 animate-pulse">
             <div class="w-48 h-1 bg-gray-800 rounded-full overflow-hidden">
                 <div class="h-full bg-blue-500 rounded-full animate-[loading_1.5s_infinite]" style="background: linear-gradient(90deg, #1e1e24 0%, #3b82f6 50%, #1e1e24 100%); background-size: 200% 100%;"></div>
             </div>
@@ -179,15 +182,14 @@
         </div>
     </div>
 
-    <!-- ================================ -->
-    <!-- BANNER DE INSTALAÇÃO - Android   -->
-    <!-- ================================ -->
+    <!-- BANNER DE INSTALAÇÃO - Android -->
     <div id="install-banner" class="install-banner fixed left-4 right-4 z-[90] shadow-2xl" style="bottom: 80px;">
         <div class="bg-gradient-to-r from-[#1c1c20] to-[#25252b] border border-blue-500/40 rounded-2xl p-4 flex items-center gap-3 shadow-[0_8px_32px_rgba(59,130,246,0.25)]">
-            <img src="assets/icon-192.png" alt="Ícone" class="w-12 h-12 rounded-xl flex-shrink-0 shadow-md">
+            <!-- CORREÇÃO 2 -->
+            <img src="icon-192.png" alt="Ícone" class="w-12 h-12 rounded-xl flex-shrink-0 shadow-md">
             <div class="flex-1 min-w-0">
                 <p class="text-white font-bold text-sm leading-tight">Instalar App</p>
-                <p class="text-gray-400 text-xs mt-0.5">Adicionar à tela inicial do celular</p>
+                <p class="text-gray-400 text-xs mt-0.5">Adicionar à tela inicial</p>
             </div>
             <button
                 onclick="installApp()"
@@ -203,13 +205,12 @@
         </div>
     </div>
 
-    <!-- ================================ -->
-    <!-- BANNER DE INSTALAÇÃO - iOS       -->
-    <!-- ================================ -->
+    <!-- BANNER DE INSTALAÇÃO - iOS -->
     <div id="ios-banner" class="ios-banner fixed left-4 right-4 z-[90] shadow-2xl" style="bottom: 80px;">
         <div class="bg-gradient-to-r from-[#1c1c20] to-[#25252b] border border-purple-500/40 rounded-2xl p-4 shadow-[0_8px_32px_rgba(168,85,247,0.2)]">
             <div class="flex items-center gap-3 mb-3">
-                <img src="assets/icon-192.png" alt="Ícone" class="w-12 h-12 rounded-xl flex-shrink-0 shadow-md">
+                <!-- CORREÇÃO 2 -->
+                <img src="icon-192.png" alt="Ícone" class="w-12 h-12 rounded-xl flex-shrink-0 shadow-md">
                 <div class="flex-1">
                     <p class="text-white font-bold text-sm">Instalar como App</p>
                     <p class="text-gray-400 text-xs mt-0.5">Siga os passos abaixo</p>
@@ -236,7 +237,8 @@
     <header class="bg-[#1c1c20] pt-safe px-4 pb-3 border-b border-gray-800 z-10 flex-shrink-0 shadow-lg">
         <div class="flex justify-between items-center mt-2">
             <div class="flex items-center gap-3">
-                <img src="assets/icon-192.png" alt="Logo" class="w-12 h-12 rounded-xl shadow-lg border border-gray-700 object-cover">
+                <!-- CORREÇÃO 2 -->
+                <img src="icon-192.png" alt="Logo" class="w-12 h-12 rounded-xl shadow-lg border border-gray-700 object-cover">
                 <div>
                     <h1 class="text-base font-bold text-white leading-tight">Baile Dom Pedro II</h1>
                     <p class="text-[11px] text-gray-400">Gestão 2026</p>
@@ -308,9 +310,10 @@
             <!-- Container da Imagem + Pinos -->
             <div class="map-image-container p-4">
 
-                <!-- Imagem real da planta do evento -->
+                <!-- CORREÇÃO 1: Imagem agora aponta para um arquivo local que você deve subir no GitHub -->
+                <!-- Crie um arquivo chamado 'mapa.png' no mesmo diretório do index.html -->
                 <img
-                    src="https://drive.google.com/thumbnail?id=17OaE3XgRAq2a7rh4hXbBDVIcaX423vN5&sz=w2000"
+                    src="mapa.png"
                     alt="Planta do Evento - Baile Dom Pedro II"
                     class="w-full rounded-2xl shadow-2xl border border-gray-700/50"
                     onerror="this.style.display='none'; document.getElementById('map-fallback').style.display='flex';">
@@ -319,7 +322,7 @@
                 <div id="map-fallback" class="hidden w-full min-h-[300px] rounded-2xl bg-gray-900 border border-gray-700 items-center justify-center flex-col gap-3 p-8 text-center">
                     <i class="ph ph-image-broken text-5xl text-gray-600"></i>
                     <p class="text-gray-400 text-sm font-medium">Imagem da planta não carregou</p>
-                    <p class="text-gray-600 text-xs">Verifique se o arquivo está público no Google Drive</p>
+                    <p class="text-gray-600 text-xs">Certifique-se de que o arquivo 'mapa.png' está na mesma pasta do projeto no GitHub.</p>
                 </div>
             </div>
 
@@ -541,20 +544,17 @@
         // =========================================
         let deferredPrompt = null;
 
-        // Android / Chrome: captura o evento antes de mostrar o prompt nativo
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
 
-            // Só mostra se o usuário não dispensou antes
             if (!localStorage.getItem('install_dismissed')) {
                 setTimeout(() => {
                     document.getElementById('install-banner').classList.add('show');
-                }, 2000); // aparece 2s após carregar
+                }, 2000); 
             }
         });
 
-        // Clicou em "Instalar" - abre o prompt nativo do Android
         function installApp() {
             if (!deferredPrompt) return;
             deferredPrompt.prompt();
@@ -566,19 +566,16 @@
             });
         }
 
-        // Dispensou o banner Android
         function dismissInstallBanner() {
             document.getElementById('install-banner').classList.remove('show');
             localStorage.setItem('install_dismissed', 'true');
         }
 
-        // Dispensou o banner iOS
         function dismissIosBanner() {
             document.getElementById('ios-banner').classList.remove('show');
             localStorage.setItem('ios_dismissed', 'true');
         }
 
-        // iOS: beforeinstallprompt não existe, mostra instruções manuais
         (function checkIos() {
             const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
             const isStandalone = window.navigator.standalone === true;
@@ -591,7 +588,6 @@
             }
         })();
 
-        // Quando app for instalado com sucesso
         window.addEventListener('appinstalled', () => {
             document.getElementById('install-banner').classList.remove('show');
             deferredPrompt = null;
