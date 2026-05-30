@@ -582,7 +582,7 @@ const Nav = {
 };
 
 // ============================================
-// MÓDULO PWA (INSTALAÇÃO) - RESOLVE O BUG DO BOTÃO TRAVADO
+// MÓDULO PWA (INSTALAÇÃO) - RESOLVE O BUG DO BOTÃO TRAVADO E ABAS DUPLAS
 // ============================================
 const PWA = {
     deferredPrompt: null,
@@ -591,6 +591,10 @@ const PWA = {
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             this.deferredPrompt = e;
+            
+            // SE ESTE EVENTO DISPAROU, É ANDROID. Vamos esconder a aba do iOS se ela tentar aparecer.
+            const iosBanner = document.getElementById('ios-banner');
+            if (iosBanner) iosBanner.classList.remove('show');
             
             if (!localStorage.getItem('install_dismissed')) {
                 setTimeout(() => {
@@ -602,7 +606,9 @@ const PWA = {
 
         window.addEventListener('appinstalled', () => {
             this.hideBanner('install-banner');
+            this.hideBanner('ios-banner');
             this.deferredPrompt = null;
+            showToast('App instalado com sucesso! ✓', 'success');
         });
 
         this.checkIos();
@@ -610,7 +616,6 @@ const PWA = {
 
     async install() {
         if (!this.deferredPrompt) {
-            // AQUI ESTÁ O FEEDBACK PARA NÃO PARECER TRAVADO:
             showToast('Abra o link nativamente no Chrome ou Safari para instalar.', 'warning');
             return;
         }
@@ -639,15 +644,20 @@ const PWA = {
     },
 
     checkIos() {
-        const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
-        const isStandalone = window.navigator.standalone === true;
+        const isIos = /iphone|ipad|ipod|macintosh/i.test(navigator.userAgent);
+        // Verificação robusta para saber se o App JÁ FOI instalado na tela inicial
+        const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
         const dismissed = localStorage.getItem('ios_dismissed');
 
+        // Mostra apenas se for iOS, NÃO estiver instalado, e se o aviso do Android (deferredPrompt) não assumiu o controle.
         if (isIos && !isStandalone && !dismissed) {
             setTimeout(() => {
-                const banner = document.getElementById('ios-banner');
-                if(banner) banner.classList.add('show');
-            }, 2000);
+                // Checagem dupla de segurança antes de exibir
+                if (!this.deferredPrompt) {
+                    const banner = document.getElementById('ios-banner');
+                    if(banner) banner.classList.add('show');
+                }
+            }, 2500); // Aguarda um pouquinho a mais para dar tempo do Android se manifestar
         }
     }
 };
