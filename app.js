@@ -19,8 +19,8 @@ const STATUS_CONFIG = {
 // ============================================
 // LAYOUT DO MAPA — Matriz de posições
 // ============================================
-const GRID_TOP    = 0.241;
-const GRID_LEFT   = 0.250;
+const GRID_TOP    = 0.250;
+const GRID_LEFT   = 0.260;
 const GRID_WIDTH  = 0.480;
 const GRID_HEIGHT = 0.485;
 const GRID_COLS   = 12;
@@ -41,9 +41,63 @@ const LAYOUT_MATRIX = [
 function cellToPercent(row, col) {
     const cellW = GRID_WIDTH  / GRID_COLS;
     const cellH = GRID_HEIGHT / GRID_ROWS;
+
+    let topBase, leftBase, rowCalculada;
+
+    // ── BLOCO 1 (Mesas de cima: 78 até 01) ──
+    if (row <= 2) {
+        topBase = 0.215;
+        leftBase = 0.260;
+        rowCalculada = row; 
+    } 
+    // ── BLOCO 2 (Mesas de baixo: 72 até 08) ──
+    else {
+        topBase = 0.450;
+        leftBase = 0.260; 
+        rowCalculada = row - 3; 
+    }
+
+    // Calcula a posição base na tela
+    let topPercent = topBase + (cellH * rowCalculada);
+    let leftPercent = leftBase + (cellW * col);
+
+    // ── 1. Corredor Vertical no Meio (Afastar mesas da direita) ──
+    if (col >= 5) {
+        leftPercent += 0.010; 
+    }
+
+    // ── 2. Ajuste EXCLUSIVO: Topo Esquerda (78 a 59) ──
+    if (row <= 2 && col <= 4) {
+        topPercent += 0.000;
+        leftPercent += 0.000;
+    }
+
+    // ── 3. Ajuste EXCLUSIVO: Topo Direita (49 a 01) ──
+    if (row <= 2 && col >= 5) {
+        topPercent += 0.000;
+        leftPercent += 0.000;
+    }
+
+    // ── 4. Ajuste EXCLUSIVO: Baixo Direita (52 a 08) ──
+    if (row >= 3 && col >= 5) {
+        topPercent += -0.010;
+        leftPercent += 0.000;
+    }
+
+    // ── 5. Espaçamento extra: Duas últimas fileiras (55, 56, 07, 08...) ──
+    if (row >= 6) {
+        topPercent += 0.001;
+    }
+
+    // ── 6. Ajuste EXCLUSIVO: Baixo Esquerda (72 a 62) ──
+    if (row >= 3 && col <= 4) {
+        topPercent += -0.010;
+        leftPercent += 0.000;
+    }
+
     return {
-        top:  (GRID_TOP  + cellH * row + cellH / 2) * 100,
-        left: (GRID_LEFT + cellW * col + cellW / 2) * 100,
+        top:  (topPercent + cellH / 2) * 100,
+        left: (leftPercent + cellW / 2) * 100,
     };
 }
 
