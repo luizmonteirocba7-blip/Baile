@@ -167,6 +167,7 @@ const Initialize = {
                 number: String(i).padStart(2, '0'),
                 status: 'livre',
                 identification: '',
+                observation: '', // <--- CAMPO ADICIONADO AQUI
                 paymentMethod: '',
                 missingAmount: '',
                 installmentsCount: '2',
@@ -378,6 +379,7 @@ const Sheet = {
 
         document.getElementById('sheet-status').value           = statusKey;
         document.getElementById('sheet-identification').value   = table.identification || '';
+        document.getElementById('sheet-observation').value      = table.observation || ''; // <--- CAMPO ADICIONADO AQUI
         document.getElementById('sheet-seller').value           = table.seller || '';
         document.getElementById('sheet-seller-other').value     = table.sellerOther || '';
         document.getElementById('sheet-sale-date').value        = table.saleDate || '';
@@ -409,7 +411,8 @@ const Sheet = {
             const el = document.getElementById(id);
             if (el) el.disabled = disabled;
         });
-        ['sheet-identification', 'sheet-seller-other', 'sheet-missing-amount', 'sheet-sale-date'].forEach(id => {
+        // <--- CAMPO 'sheet-observation' ADICIONADO NA LISTA ABAIXO
+        ['sheet-identification', 'sheet-seller-other', 'sheet-missing-amount', 'sheet-sale-date', 'sheet-observation'].forEach(id => {
             const el = document.getElementById(id);
             if (!el) return;
             if (disabled) el.setAttribute('readonly', 'true');
@@ -478,6 +481,7 @@ const Save = {
 
         table.status           = document.getElementById('sheet-status').value;
         table.identification   = document.getElementById('sheet-identification').value.trim();
+        table.observation      = document.getElementById('sheet-observation').value.trim(); // <--- CAMPO ADICIONADO AQUI
         table.seller           = document.getElementById('sheet-seller').value;
         table.sellerOther      = document.getElementById('sheet-seller-other').value.trim();
         table.saleDate         = document.getElementById('sheet-sale-date').value;
