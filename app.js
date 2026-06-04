@@ -397,7 +397,7 @@ const Sheet = {
                     <span class="text-[10px] font-bold text-gray-600 w-4 text-right flex-shrink-0">${i + 1}</span>
                     <input type="text" id="guest-${i}" value="${val}"
                         placeholder="${readOnly ? '— Vazio —' : 'Nome do convidado...'}"
-                        class="field-input flex-1"
+                        class="w-full bg-[#121214] border border-gray-700 text-white text-sm rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none placeholder-gray-600 transition-all flex-1"
                         maxlength="40" ${readOnly ? 'readonly' : ''}>
                 </div>`;
         }
@@ -462,10 +462,11 @@ const Sheet = {
             const value = table.installmentsValues[i] || '';
             const readOnly = !State.isEditor ? 'readonly' : '';
             container.innerHTML += `
-                <div class="flex flex-col gap-1">
-                    <label class="field-label">Parcela ${i + 1}</label>
+                <div class="flex flex-col gap-2">
+                    <label class="text-[11px] text-gray-400 font-semibold uppercase tracking-wide">Parcela ${i + 1}</label>
                     <input type="text" id="inst-val-${i}" value="${value}" placeholder="R$ 0,00"
-                        class="field-input" maxlength="15" ${readOnly}>
+                        class="w-full bg-[#121214] border border-gray-700 text-white text-sm rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none placeholder-gray-600 transition-all" 
+                        maxlength="15" ${readOnly}>
                 </div>`;
         }
     }
