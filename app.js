@@ -5,7 +5,7 @@ const CONFIG = {
     webAppUrl: 'https://script.google.com/macros/s/AKfycbyZPP_uF5VpQWYZZDzC-mrxDhjBpGbpHO_Twt7_mnWK71-yqTA7_4N8JjH2oAX7iiLIjQ/exec',
     password: 'baile2026',
     syncInterval: 5 * 60 * 1000,
-    version: '3.0.0'
+    version: '3.1.0'
 };
 
 const STATUS_CONFIG = {
@@ -15,6 +15,53 @@ const STATUS_CONFIG = {
     patrocinio: { bg: 'rgba(6,182,212,0.80)',   border: '#22d3ee', glow: '0 0 12px rgba(6,182,212,0.5)',    glowStrong: '0 0 22px rgba(6,182,212,0.8)',    wave: 'rgba(6,182,212,0.6)',   indicator: '#06b6d4', label: 'Patrocínio' },
     bloqueada:  { bg: 'rgba(107,114,128,0.75)', border: '#9ca3af', glow: '0 0 8px rgba(107,114,128,0.3)',   glowStrong: '0 0 14px rgba(107,114,128,0.5)',  wave: 'rgba(107,114,128,0.4)', indicator: '#6b7280', label: 'Bloqueada' }
 };
+
+// Configuração de cor para mesa com parcela Atrasada
+const STATUS_OVERDUE = { 
+    bg: 'rgba(220,38,38,0.85)', 
+    border: '#ef4444', 
+    glow: '0 0 12px rgba(220,38,38,0.5)', 
+    glowStrong: '0 0 22px rgba(220,38,38,0.8)', 
+    wave: 'rgba(220,38,38,0.6)', 
+    indicator: '#dc2626', 
+    label: 'Atrasada' 
+};
+
+// ============================================
+// LÓGICA DE VENCIMENTO DE PARCELAS
+// ============================================
+function isTableOverdue(table) {
+    if (table.status === 'livre' || table.status === 'bloqueada') return false;
+    if (table.paymentMethod !== 'pix' && table.paymentMethod !== 'parcelado') return false;
+    if (!table.saleDate) return false;
+
+    // Converter a data do formato YYYY-MM-DD com segurança de fuso horário
+    const [year, month, day] = table.saleDate.split('-');
+    const sale = new Date(year, month - 1, day);
+    const today = new Date();
+    
+    // Diferença em dias desde a venda
+    const diffTime = today - sale;
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    // Quantas parcelas JÁ DEVERIAM estar pagas? (A cada 30 dias vence uma)
+    let expectedPaid = Math.floor(diffDays / 30);
+    
+    const totalInst = parseInt(table.installmentsCount) || 2;
+    if (expectedPaid > totalInst) expectedPaid = totalInst;
+
+    // Quantas estão marcadas como pagas manualmente pelo admin?
+    let actualPaid = 0;
+    for (let i = 0; i < totalInst; i++) {
+        if (table.installmentsPaid && table.installmentsPaid[i] === true) {
+            actualPaid++;
+        }
+    }
+
+    // Se o esperado for maior que o que foi pago na vida real, está atrasado.
+    return expectedPaid > actualPaid;
+}
+
 
 // ============================================
 // LAYOUT DO MAPA — Matriz de posições
@@ -44,56 +91,21 @@ function cellToPercent(row, col) {
 
     let topBase, leftBase, rowCalculada;
 
-    // ── BLOCO 1 (Mesas de cima: 78 até 01) ──
     if (row <= 2) {
-        topBase = 0.215;
-        leftBase = 0.260;
-        rowCalculada = row; 
-    } 
-    // ── BLOCO 2 (Mesas de baixo: 72 até 08) ──
-    else {
-        topBase = 0.450;
-        leftBase = 0.260; 
-        rowCalculada = row - 3; 
+        topBase = 0.215; leftBase = 0.260; rowCalculada = row; 
+    } else {
+        topBase = 0.450; leftBase = 0.260; rowCalculada = row - 3; 
     }
 
-    // Calcula a posição base na tela
     let topPercent = topBase + (cellH * rowCalculada);
     let leftPercent = leftBase + (cellW * col);
 
-    // ── 1. Corredor Vertical no Meio (Afastar mesas da direita) ──
-    if (col >= 5) {
-        leftPercent += 0.010; 
-    }
-
-    // ── 2. Ajuste EXCLUSIVO: Topo Esquerda (78 a 59) ──
-    if (row <= 2 && col <= 4) {
-        topPercent += 0.000;
-        leftPercent += 0.000;
-    }
-
-    // ── 3. Ajuste EXCLUSIVO: Topo Direita (49 a 01) ──
-    if (row <= 2 && col >= 5) {
-        topPercent += 0.000;
-        leftPercent += 0.000;
-    }
-
-    // ── 4. Ajuste EXCLUSIVO: Baixo Direita (52 a 08) ──
-    if (row >= 3 && col >= 5) {
-        topPercent += -0.010;
-        leftPercent += 0.000;
-    }
-
-    // ── 5. Espaçamento extra: Duas últimas fileiras (55, 56, 07, 08...) ──
-    if (row >= 6) {
-        topPercent += 0.001;
-    }
-
-    // ── 6. Ajuste EXCLUSIVO: Baixo Esquerda (72 a 62) ──
-    if (row >= 3 && col <= 4) {
-        topPercent += -0.010;
-        leftPercent += 0.000;
-    }
+    if (col >= 5) leftPercent += 0.010; 
+    if (row <= 2 && col <= 4) { topPercent += 0.000; leftPercent += 0.000; }
+    if (row <= 2 && col >= 5) { topPercent += 0.000; leftPercent += 0.000; }
+    if (row >= 3 && col >= 5) { topPercent += -0.010; leftPercent += 0.000; }
+    if (row >= 6) { topPercent += 0.001; }
+    if (row >= 3 && col <= 4) { topPercent += -0.010; leftPercent += 0.000; }
 
     return {
         top:  (topPercent + cellH / 2) * 100,
@@ -167,11 +179,12 @@ const Initialize = {
                 number: String(i).padStart(2, '0'),
                 status: 'livre',
                 identification: '',
-                observation: '', // <--- CAMPO ADICIONADO AQUI
+                observation: '',
                 paymentMethod: '',
                 missingAmount: '',
                 installmentsCount: '2',
                 installmentsValues: Array(6).fill(''),
+                installmentsPaid: Array(6).fill(false), // <--- CAMPO DE CONTROLE DE PARCELAS PAGAS
                 guests: Array(10).fill(''),
                 seller: '',
                 sellerOther: '',
@@ -187,6 +200,7 @@ const Initialize = {
             if (State.tables[id]) {
                 Object.assign(State.tables[id], data);
                 if (!State.tables[id].installmentsValues) State.tables[id].installmentsValues = Array(6).fill('');
+                if (!State.tables[id].installmentsPaid) State.tables[id].installmentsPaid = Array(6).fill(false);
                 if (!State.tables[id].guests) State.tables[id].guests = Array(10).fill('');
             }
         });
@@ -203,7 +217,6 @@ const Render = {
         this.stats();
     },
 
-    // Renderiza os pins animados no mapa
     pins() {
         const layer = document.getElementById('pins-layer');
         if (!layer) return;
@@ -215,12 +228,15 @@ const Render = {
                 const table = State.tables[`T${num}`];
                 if (!table) return;
 
-                const cfg = STATUS_CONFIG[table.status] || STATUS_CONFIG['livre'];
+                // VERIFICA SE ESTÁ ATRASADO PARA SUBSTITUIR A COR
+                let cfg = STATUS_CONFIG[table.status] || STATUS_CONFIG['livre'];
+                if (isTableOverdue(table)) {
+                    cfg = STATUS_OVERDUE;
+                }
+
                 const { top, left } = cellToPercent(ri, ci);
                 const waveDelay = ((num * 137) % 2400) / 1000;
-
-                const idHtml = table.identification
-                    ? `<span class="pin-id">${table.identification}</span>` : '';
+                const idHtml = table.identification ? `<span class="pin-id">${table.identification}</span>` : '';
 
                 html += `
                 <div class="table-pin" onclick="openSheet('T${num}')"
@@ -240,7 +256,6 @@ const Render = {
         layer.innerHTML = html;
     },
 
-    // Atualiza os contadores do header
     stats() {
         const counts = { livre: 0, negociacao: 0, reservada: 0, patrocinio: 0, bloqueada: 0 };
         Object.values(State.tables).forEach(t => {
@@ -254,7 +269,6 @@ const Render = {
         el('cnt-bloqueada')  && (el('cnt-bloqueada').textContent  = counts.bloqueada);
     },
 
-    // Renderiza a lista de mesas
     list(searchText = '') {
         const container = document.getElementById('list-container');
         if (!container) return;
@@ -277,7 +291,11 @@ const Render = {
     },
 
     createListCard(table) {
-        const cfg = STATUS_CONFIG[table.status] || STATUS_CONFIG['livre'];
+        let cfg = STATUS_CONFIG[table.status] || STATUS_CONFIG['livre'];
+        if (isTableOverdue(table)) {
+            cfg = STATUS_OVERDUE;
+        }
+        
         const name = table.identification || 'Sem responsável';
 
         return `
@@ -367,7 +385,11 @@ const Sheet = {
         setTimeout(() => { State.currentTableId = null; }, 300);
     },
     updateHeader(table) {
-        const cfg = STATUS_CONFIG[table.status] || STATUS_CONFIG['livre'];
+        let cfg = STATUS_CONFIG[table.status] || STATUS_CONFIG['livre'];
+        if (isTableOverdue(table)) {
+            cfg = STATUS_OVERDUE;
+        }
+
         document.getElementById('sheet-title').textContent = `Mesa ${table.number}`;
         const indicator = document.getElementById('sheet-status-indicator');
         indicator.style.background  = cfg.indicator;
@@ -379,7 +401,7 @@ const Sheet = {
 
         document.getElementById('sheet-status').value           = statusKey;
         document.getElementById('sheet-identification').value   = table.identification || '';
-        document.getElementById('sheet-observation').value      = table.observation || ''; // <--- CAMPO ADICIONADO AQUI
+        document.getElementById('sheet-observation').value      = table.observation || '';
         document.getElementById('sheet-seller').value           = table.seller || '';
         document.getElementById('sheet-seller-other').value     = table.sellerOther || '';
         document.getElementById('sheet-sale-date').value        = table.saleDate || '';
@@ -411,7 +433,6 @@ const Sheet = {
             const el = document.getElementById(id);
             if (el) el.disabled = disabled;
         });
-        // <--- CAMPO 'sheet-observation' ADICIONADO NA LISTA ABAIXO
         ['sheet-identification', 'sheet-seller-other', 'sheet-missing-amount', 'sheet-sale-date', 'sheet-observation'].forEach(id => {
             const el = document.getElementById(id);
             if (!el) return;
@@ -460,13 +481,23 @@ const Sheet = {
         container.innerHTML = '';
         for (let i = 0; i < count; i++) {
             const value = table.installmentsValues[i] || '';
-            const readOnly = !State.isEditor ? 'readonly' : '';
+            
+            // Lógica do checkmark de pagamento
+            const isPaid = table.installmentsPaid && table.installmentsPaid[i] ? 'checked' : '';
+            const readOnly = !State.isEditor ? 'disabled' : '';
+
             container.innerHTML += `
-                <div class="flex flex-col gap-2">
-                    <label class="text-[11px] text-gray-400 font-semibold uppercase tracking-wide">Parcela ${i + 1}</label>
+                <div class="flex flex-col gap-2 p-3 border border-gray-800 rounded-xl bg-gray-900/40 relative">
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="text-[11px] text-gray-400 font-semibold uppercase tracking-wide">Parcela ${i + 1}</label>
+                        <label class="flex items-center gap-1.5 text-[10px] uppercase font-bold text-gray-300 cursor-pointer select-none">
+                            <input type="checkbox" id="inst-paid-${i}" class="w-3.5 h-3.5 rounded accent-green-500" ${isPaid} ${readOnly}>
+                            Pago
+                        </label>
+                    </div>
                     <input type="text" id="inst-val-${i}" value="${value}" placeholder="R$ 0,00"
-                        class="w-full bg-[#121214] border border-gray-700 text-white text-sm rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none placeholder-gray-600 transition-all" 
-                        maxlength="15" ${readOnly}>
+                        class="w-full bg-[#121214] border border-gray-700 text-white text-sm rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none placeholder-gray-600 transition-all" 
+                        maxlength="15" ${readOnly ? 'readonly' : ''}>
                 </div>`;
         }
     }
@@ -482,7 +513,7 @@ const Save = {
 
         table.status           = document.getElementById('sheet-status').value;
         table.identification   = document.getElementById('sheet-identification').value.trim();
-        table.observation      = document.getElementById('sheet-observation').value.trim(); // <--- CAMPO ADICIONADO AQUI
+        table.observation      = document.getElementById('sheet-observation').value.trim();
         table.seller           = document.getElementById('sheet-seller').value;
         table.sellerOther      = document.getElementById('sheet-seller-other').value.trim();
         table.saleDate         = document.getElementById('sheet-sale-date').value;
@@ -496,11 +527,16 @@ const Save = {
         }
 
         table.installmentsValues = Array(6).fill('');
+        table.installmentsPaid = Array(6).fill(false); // Zeramos e repopulamos o controle de pagos
+        
         if (table.paymentMethod === 'parcelado' || table.paymentMethod === 'pix') {
             const count = parseInt(table.installmentsCount);
             for (let i = 0; i < count; i++) {
                 const inp = document.getElementById(`inst-val-${i}`);
                 if (inp) table.installmentsValues[i] = inp.value.trim();
+
+                const chk = document.getElementById(`inst-paid-${i}`);
+                if (chk) table.installmentsPaid[i] = chk.checked;
             }
         }
 
