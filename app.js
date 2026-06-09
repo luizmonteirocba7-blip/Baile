@@ -445,7 +445,7 @@ const Sheet = {
     togglePaymentFields() {
         const method = document.getElementById('sheet-payment-method').value;
         const wrapper = document.getElementById('installments-wrapper');
-        if (method === 'parcelado') {
+        if (method === 'parcelado' || method === 'pix') {
             wrapper.classList.remove('hidden'); wrapper.classList.add('flex');
             this.renderInstallmentFields();
         } else {
@@ -496,7 +496,7 @@ const Save = {
         }
 
         table.installmentsValues = Array(6).fill('');
-        if (table.paymentMethod === 'parcelado') {
+        if (table.paymentMethod === 'parcelado' || table.paymentMethod === 'pix') {
             const count = parseInt(table.installmentsCount);
             for (let i = 0; i < count; i++) {
                 const inp = document.getElementById(`inst-val-${i}`);
