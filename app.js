@@ -586,10 +586,10 @@ const Nav = {
     },
     updateNav(btn, active) {
         if (active) {
-            btn.classList.add('text-blue-500'); btn.classList.remove('text-gray-500');
+            btn.classList.add('text-[#c8a45a]'); btn.classList.remove('text-gray-500');
             btn.querySelector('i').classList.add('ph-fill');
         } else {
-            btn.classList.remove('text-blue-500'); btn.classList.add('text-gray-500');
+            btn.classList.remove('text-[#c8a45a]'); btn.classList.add('text-gray-500');
             btn.querySelector('i').classList.remove('ph-fill');
         }
     }
